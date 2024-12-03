@@ -1,0 +1,218 @@
+:root {
+  --primary-color: #7881f8;
+  --primary-light-color: #7c8aff;
+  --secondary-color: #f9f9f9;
+  --white-color: #ffffff;
+  --black-color: #000000;
+}
+
+.admin-menu-title {
+  text-align: center;
+  font-size: 23px;
+  font-weight: 600;
+}
+
+.page-heading-title h1 {
+  text-align: center;
+  font-size: 50px;
+  text-transform: uppercase;
+  color: var(--primary-color);
+  letter-spacing: 1px;
+  font-family: "Playfair Display", serif;
+  font-weight: 400;
+}
+
+.common-shadow {
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tabs-container {
+  background: transparent;
+  border-radius: 50px;
+  padding: 10px 30px;
+  display: inline-block;
+  margin-left: 30px;
+  margin-top: 30px;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  outline: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: black;
+  box-shadow: rgba(0, 0, 0, 0.075) 0px 2px 4px 0px;
+}
+
+.tab.active {
+  background-color: var(--primary-color);
+  color: var(--white-color);
+}
+
+.tab:hover {
+  background-color: var(--primary-color);
+  color: var(--white-color);
+}
+
+.tab-content {
+  width: 50%;
+  margin-top: 20px;
+  margin-left: 30px;
+  padding: 20px 30px 30px 30px;
+  border-radius: 10px;
+  font-size: 16px;
+  box-shadow: 0 3.2px 7.2px 0 rgb(0 0 0 / 13%), 0 0.6px 1.8px 0 rgb(0 0 0 / 11%);
+}
+
+/* css utility */
+.common-title {
+  margin-top: 0;
+  text-align: center;
+}
+
+.mt-20 {
+  margin-top: 20px !important;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+.button-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+}
+
+.common-input-group {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  grid-template-rows: 1fr;
+  grid-column-gap: 20px;
+  grid-row-gap: 0px;
+  align-items: center;
+}
+
+.common-form-input {
+  width: 90% !important;
+  color: rgb(36, 35, 42) !important;
+  font-size: 16px !important;
+  line-height: 20px !important;
+  min-height: 28px !important;
+  border-radius: 4px !important;
+  padding: 8px 16px !important;
+  border: 2px solid transparent !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24) !important;
+  background: transparent !important;
+  transition: all 0.1s ease 0s !important;
+}
+
+.form-input:focus {
+  border: 2px solid var(--primary-light-color) !important;
+}
+
+.endpoints-wrapper {
+  margin: auto;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.endpoints-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  background-color: var(--white-color);
+}
+
+.endpoints-table thead {
+  background-color: var(--primary-color);
+  color: var(--white-color);
+}
+
+.endpoints-table th {
+  padding: 15px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.endpoints-table tbody tr {
+  transition: background-color 0.3s ease;
+}
+
+.endpoints-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.endpoints-table tbody tr:hover {
+  background-color: #eef4ff;
+}
+
+.endpoints-table td {
+  padding: 15px;
+  font-size: 14px;
+  color: #333;
+}
+
+.copy-button {
+  background-color: var(--primary-color);
+  color: var(--white-color);
+  border: none;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.copy-button:hover {
+  background-color: #4351c1;
+}
+
+.save-btn,
+.common-btn {
+  background-color: var(--primary-color);
+  color: var(--white-color);
+  border: none;
+  border-radius: 30px;
+  padding: 10px 30px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.save-btn:hover,
+.common-btn:hover {
+  background-color: #4351c1;
+}
+
+/* loader */
+.loader-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px dotted #fff;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  box-sizing: border-box;
+  animation: rotation 2s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
