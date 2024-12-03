@@ -13,6 +13,8 @@
 # Local History for Visual Studio Code
 .history/
 
+inc/files/credentials.json
+
 # composer
 vendor
 
