@@ -2,13 +2,13 @@
 
 /**
  *  
- * Plugin Name: WP Plugin Boilerplate
- * Plugin URI:  https://github.com/shahjalal132/wp-plugin-dev-boilerplate
- * Author:      Shah jalal
- * Author URI:  https://github.com/shahjalal132
- * Description: WordPress Plugin Boilerplate.
+ * Plugin Name: Zenoti API Integration
+ * Plugin URI:  https://github.com/shahjalal132/zenoti-api-integration
+ * Author:      Sujon
+ * Author URI:  https://github.com/mtmsujan/
+ * Description: Zenoti API Integration.
  * Version:     1.0.0
- * text-domain: wp-plugin-boilerplate
+ * text-domain: zenoti
  * Domain Path: /languages
  * 
  */
@@ -69,7 +69,7 @@ function wpb_plugin_activator() {
 }
 
 // Register activation hook
-register_activation_hook( __FILE__, 'wpb_plugin_activator' );
+// register_activation_hook( __FILE__, 'wpb_plugin_activator' );
 
 /**
  * The code that runs during plugin deactivation.

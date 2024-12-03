@@ -56,7 +56,7 @@ class Admin_Sub_Menu {
     }
 
     function add_plugin_action_links( $links ) {
-        $settings_link = '<a href="admin.php?page=menu-slug2">' . __( 'Settings', 'wp-plugin-boilerplate' ) . '</a>';
+        $settings_link = '<a href="admin.php?page=menu-slug2">' . __( 'Settings', 'zenoti' ) . '</a>';
         array_unshift( $links, $settings_link );
         return $links;
     }
