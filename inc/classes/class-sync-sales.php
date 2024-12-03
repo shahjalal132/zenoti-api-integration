@@ -65,8 +65,10 @@ class Sync_Sales {
 
         // check if guest exists
         if ( $guest && isset( $guest['page_Info']['total'] ) && $guest['page_Info']['total'] > 0 ) {
+            // $this->put_program_logs( 'Guest Exists' );
             $guest_id = $guest['guests'][0]['id'];
         } else {
+            // $this->put_program_logs( 'Guest Not Exists' );
             // generate payload for creating a guest
             $payload = [
                 "center_id"     => $this->center_id,
@@ -107,7 +109,7 @@ class Sync_Sales {
         }
 
         $this->guest_id = $guest_id;
-        // $this->put_program_logs( 'Guest ID: ' . $guest_id );
+        $this->put_program_logs( 'Guest ID: ' . $guest_id );
     }
 
     /**

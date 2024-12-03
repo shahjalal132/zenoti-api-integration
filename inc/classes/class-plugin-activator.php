@@ -30,4 +30,25 @@ class Plugin_Activator {
         dbDelta( $sql );
     }
 
+    public static function create_centers_table() {
+        // create sync_centers table
+        global $wpdb;
+        $table_name      = $wpdb->prefix . 'sync_centers';
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+             id INT AUTO_INCREMENT,
+             center_id VARCHAR(255) NOT NULL,
+             center_code VARCHAR(20) NOT NULL,
+             center_name VARCHAR(255) NOT NULL,
+             center_data TEXT NOT NULL,
+             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+             PRIMARY KEY (id)
+         ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
+    }
+
 }
