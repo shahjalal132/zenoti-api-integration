@@ -13,6 +13,7 @@ class Sync_Sales {
     protected $api_base_url = 'https://api.zenoti.com/v1';
     protected $api_key;
     protected $center_id;
+    protected $guest_id;
 
     public function __construct() {
         $this->setup_hooks();
@@ -50,7 +51,9 @@ class Sync_Sales {
         $state          = $order->get_billing_state();
         $postcode       = $order->get_billing_postcode();
         $country        = $order->get_billing_country();
-        $this->put_program_logs( 'country: ' . $country );
+
+        // get phone code based on country
+        $country_code = $this->get_country_code_based_on_country( $country );
 
         // initialize guest id
         $guest_id = '';
@@ -62,11 +65,8 @@ class Sync_Sales {
 
         // check if guest exists
         if ( $guest && isset( $guest['page_Info']['total'] ) && $guest['page_Info']['total'] > 0 ) {
-            $this->put_program_logs( 'Guest found' );
             $guest_id = $guest['guests'][0]['id'];
         } else {
-            $this->put_program_logs( 'Guest not found, creating new guest.' );
-
             // generate payload for creating a guest
             $payload = [
                 "center_id"     => $this->center_id,
@@ -76,7 +76,7 @@ class Sync_Sales {
                     "last_name"     => $last_name,
                     "email"         => $customer_email,
                     "mobile_phone"  => [
-                        "country_code" => 1, // Default country code; adjust based on your requirement
+                        "country_code" => $country_code,
                         "number"       => preg_replace( '/\D/', '', $phone ) // remove non-numeric characters
                     ],
                     "gender"        => -1,
@@ -89,27 +89,25 @@ class Sync_Sales {
                     "state_id"    => -1,
                     "state_other" => "",
                     "zip_code"    => $postcode,
-                    "country_id"  => -1
+                    "country_id"  => $country_code,
                 ],
             ];
 
             // put payload
-            $this->put_program_logs( 'Payload: ' . json_encode( $payload ) );
+            // $this->put_program_logs( 'Payload: ' . json_encode( $payload ) );
 
             // create a guest
             $new_guest_response = $this->create_a_guest( $payload );
-            $this->put_program_logs( 'API Response: ' . $new_guest_response );
+            // $this->put_program_logs( 'API Response: ' . $new_guest_response );
             $new_guest = json_decode( $new_guest_response, true );
 
             if ( $new_guest && isset( $new_guest['id'] ) ) {
                 $guest_id = $new_guest['id'];
-                $this->put_program_logs( 'New guest created with ID: ' . $guest_id );
-            } else {
-                $this->put_program_logs( 'Failed to create new guest.' );
             }
         }
 
-        $this->put_program_logs( 'Guest ID: ' . $guest_id );
+        $this->guest_id = $guest_id;
+        // $this->put_program_logs( 'Guest ID: ' . $guest_id );
     }
 
     /**
@@ -165,6 +163,13 @@ class Sync_Sales {
 
         curl_close( $curl );
         return $response;
+    }
+
+    public function get_country_code_based_on_country( string $country ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_countries';
+        $country_id = $wpdb->get_var( "SELECT country_id FROM $table_name WHERE country_code = '{$country}'" );
+        return $country_id;
     }
 
 }
