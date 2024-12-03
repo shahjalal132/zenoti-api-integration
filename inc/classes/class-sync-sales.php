@@ -27,12 +27,9 @@ class Sync_Sales {
         // get center ids
         $this->center_ids = $this->get_center_ids_from_db();
 
-        // get credentials
-        $file = PLUGIN_BASE_PATH . '/inc/files/credentials.json';
-        if ( file_exists( $file ) ) {
-            $credentials   = json_decode( file_get_contents( $file ) );
-            $this->api_key = $credentials->apiKey;
-        }
+        // get api credentials
+        $api_url       = get_option( 'api_url', 'https://api.zenoti.com/v1' );
+        $this->api_key = get_option( 'api_key' );
     }
 
     /**

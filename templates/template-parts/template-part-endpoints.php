@@ -11,8 +11,13 @@
         </thead>
         <tbody>
             <tr>
-                <td><?= $base_url ?>/users</td>
-                <td>Get all users</td>
+                <td><?= $base_url ?>/sync-countries</td>
+                <td>Sync Countries</td>
+                <td><button class="copy-button">Copy</button></td>
+            </tr>
+            <tr>
+                <td><?= $base_url ?>/sync-centers</td>
+                <td>Sync Centers</td>
                 <td><button class="copy-button">Copy</button></td>
             </tr>
         </tbody>

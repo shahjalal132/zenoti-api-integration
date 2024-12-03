@@ -1,7 +1,7 @@
 <?php
 
-$base_url = site_url() . '/wp-json';
-$api_url  = get_option( 'api_url' );
+$base_url = site_url() . '/wp-json/api/v1';
+$api_url  = get_option( 'api_url', 'https://api.zenoti.com/v1' );
 $api_key  = get_option( 'api_key' );
 $option1  = get_option( 'option1' );
 $option2  = get_option( 'option2' );
@@ -10,7 +10,7 @@ $option2  = get_option( 'option2' );
 
 <!-- <h2 class="admin-menu-title">Admin Sub Menu Contents</h2> -->
 <div class="page-heading-title">
-    <h1>Page Title</h1>
+    <h1>Zenoti Settings</h1>
 </div>
 
 <div class="tab-container">

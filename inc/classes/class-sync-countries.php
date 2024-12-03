@@ -23,15 +23,9 @@ class Sync_Countries {
         // Register REST API action
         add_action( 'rest_api_init', [ $this, 'register_rest_route' ] );
 
-        // Load credentials
-        $file = PLUGIN_BASE_PATH . '/inc/files/credentials.json';
-        if ( file_exists( $file ) ) {
-            $credentials = json_decode( file_get_contents( $file ) );
-            if ( isset( $credentials->apiKey, $credentials->centerId ) ) {
-                $this->api_key   = $credentials->apiKey;
-                $this->center_id = $credentials->centerId;
-            }
-        }
+        // get api credentials
+        $api_url       = get_option( 'api_url', 'https://api.zenoti.com/v1' );
+        $this->api_key = get_option( 'api_key' );
     }
 
     public function register_rest_route() {
