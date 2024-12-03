@@ -12,6 +12,7 @@ class Sync_Sales {
 
     protected $api_base_url = 'https://api.zenoti.com/v1';
     protected $api_key;
+    protected $center_ids;
     protected $center_id;
     protected $guest_id;
 
@@ -20,14 +21,17 @@ class Sync_Sales {
     }
 
     public function setup_hooks() {
+
         add_action( 'woocommerce_order_status_completed', [ $this, 'sync_sales' ], 10, 1 );
+
+        // get center ids
+        $this->center_ids = $this->get_center_ids_from_db();
 
         // get credentials
         $file = PLUGIN_BASE_PATH . '/inc/files/credentials.json';
         if ( file_exists( $file ) ) {
-            $credentials     = json_decode( file_get_contents( $file ) );
-            $this->api_key   = $credentials->apiKey;
-            $this->center_id = $credentials->centerId;
+            $credentials   = json_decode( file_get_contents( $file ) );
+            $this->api_key = $credentials->apiKey;
         }
     }
 
@@ -58,20 +62,27 @@ class Sync_Sales {
         // initialize guest id
         $guest_id = '';
 
-        // search guest
-        $guest = $this->search_a_guest( $customer_email );
-        // decode json
-        $guest = json_decode( $guest, true );
+        if ( !empty( $this->center_ids ) ) {
+            foreach ( $this->center_ids as $center_id ) {
+                // search guest
+                $guest = $this->search_a_guest( $center_id, $customer_email );
 
-        // check if guest exists
-        if ( $guest && isset( $guest['page_Info']['total'] ) && $guest['page_Info']['total'] > 0 ) {
-            // $this->put_program_logs( 'Guest Exists' );
-            $guest_id = $guest['guests'][0]['id'];
-        } else {
-            // $this->put_program_logs( 'Guest Not Exists' );
-            // generate payload for creating a guest
+                // decode json
+                $guest = json_decode( $guest, true );
+
+                // check if guest exists
+                if ( $guest && isset( $guest['page_Info']['total'] ) && $guest['page_Info']['total'] > 0 ) {
+                    $guest_id        = $guest['guests'][0]['id'];
+                    $this->center_id = $center_id;
+                    break; // Exit the loop if a guest is found
+                }
+            }
+        }
+
+        // If no guest found, create a new one
+        if ( empty( $guest_id ) ) {
             $payload = [
-                "center_id"     => $this->center_id,
+                "center_id"     => $this->center_ids[0],
                 "personal_info" => [
                     "user_name"     => strtolower( $first_name . '_' . $last_name ),
                     "first_name"    => $first_name,
@@ -95,21 +106,18 @@ class Sync_Sales {
                 ],
             ];
 
-            // put payload
-            // $this->put_program_logs( 'Payload: ' . json_encode( $payload ) );
-
-            // create a guest
             $new_guest_response = $this->create_a_guest( $payload );
-            // $this->put_program_logs( 'API Response: ' . $new_guest_response );
-            $new_guest = json_decode( $new_guest_response, true );
+            $new_guest          = json_decode( $new_guest_response, true );
 
-            if ( $new_guest && isset( $new_guest['id'] ) ) {
-                $guest_id = $new_guest['id'];
+            if ( $new_guest && isset( $new_guest['id'] ) && isset( $new_guest['center_id'] ) ) {
+                $guest_id        = $new_guest['id'];
+                $this->center_id = $new_guest['center_id'];
             }
         }
 
         $this->guest_id = $guest_id;
-        $this->put_program_logs( 'Guest ID: ' . $guest_id );
+        // $this->put_program_logs( 'Center ID: ' . $this->center_id );
+        // $this->put_program_logs( 'Guest ID: ' . $guest_id );
     }
 
     /**
@@ -117,11 +125,11 @@ class Sync_Sales {
      * @param string $email
      * @return string
      */
-    public function search_a_guest( string $email ) {
+    public function search_a_guest( string $center_id, string $email ) {
 
         $curl = curl_init();
         curl_setopt_array( $curl, array(
-            CURLOPT_URL            => "{$this->api_base_url}/guests/search?center_id={$this->center_id}&email={$email}",
+            CURLOPT_URL            => "{$this->api_base_url}/guests/search?center_id={$center_id}&email={$email}",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING       => '',
             CURLOPT_MAXREDIRS      => 10,
@@ -172,6 +180,20 @@ class Sync_Sales {
         $table_name = $wpdb->prefix . 'sync_countries';
         $country_id = $wpdb->get_var( "SELECT country_id FROM $table_name WHERE country_code = '{$country}'" );
         return $country_id;
+    }
+
+    public function get_center_ids_from_db() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_centers';
+        $sql        = $wpdb->prepare( "SELECT center_id FROM $table_name" );
+        $result     = $wpdb->get_results( $sql );
+
+        $center_ids = [];
+        $center_ids = array_map( function ($row) {
+            return $center_ids[] = $row->center_id;
+        }, $result );
+
+        return $center_ids;
     }
 
 }
