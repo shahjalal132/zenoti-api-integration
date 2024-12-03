@@ -10,7 +10,9 @@
 class Plugin_Deactivator {
 
     public static function deactivate() {
-        // Define your code here
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_countries';
+        $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
     }
 
 }

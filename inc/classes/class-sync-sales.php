@@ -38,8 +38,19 @@ class Sync_Sales {
 
         // get order
         $order = wc_get_order( $order_id );
-        // get customer email
+
+        // get customer details
         $customer_email = $order->get_billing_email();
+        $first_name     = $order->get_billing_first_name();
+        $last_name      = $order->get_billing_last_name();
+        $phone          = $order->get_billing_phone();
+        $address_1      = $order->get_billing_address_1();
+        $address_2      = $order->get_billing_address_2();
+        $city           = $order->get_billing_city();
+        $state          = $order->get_billing_state();
+        $postcode       = $order->get_billing_postcode();
+        $country        = $order->get_billing_country();
+        $this->put_program_logs( 'country: ' . $country );
 
         // initialize guest id
         $guest_id = '';
@@ -49,19 +60,64 @@ class Sync_Sales {
         // decode json
         $guest = json_decode( $guest, true );
 
-        // check if guest exists than get guest id
-        if ( $guest && $guest['page_Info']['total'] > 0 ) {
-            $this->put_program_logs( 'guest found' );
+        // check if guest exists
+        if ( $guest && isset( $guest['page_Info']['total'] ) && $guest['page_Info']['total'] > 0 ) {
+            $this->put_program_logs( 'Guest found' );
             $guest_id = $guest['guests'][0]['id'];
         } else {
-            $this->put_program_logs( 'guest not found' );
+            $this->put_program_logs( 'Guest not found, creating new guest.' );
+
+            // generate payload for creating a guest
+            $payload = [
+                "center_id"     => $this->center_id,
+                "personal_info" => [
+                    "user_name"     => strtolower( $first_name . '_' . $last_name ),
+                    "first_name"    => $first_name,
+                    "last_name"     => $last_name,
+                    "email"         => $customer_email,
+                    "mobile_phone"  => [
+                        "country_code" => 1, // Default country code; adjust based on your requirement
+                        "number"       => preg_replace( '/\D/', '', $phone ) // remove non-numeric characters
+                    ],
+                    "gender"        => -1,
+                    "date_of_birth" => null,
+                ],
+                "address_info"  => [
+                    "address_1"   => $address_1,
+                    "address_2"   => $address_2,
+                    "city"        => $city,
+                    "state_id"    => -1,
+                    "state_other" => "",
+                    "zip_code"    => $postcode,
+                    "country_id"  => -1
+                ],
+            ];
+
+            // put payload
+            $this->put_program_logs( 'Payload: ' . json_encode( $payload ) );
+
+            // create a guest
+            $new_guest_response = $this->create_a_guest( $payload );
+            $this->put_program_logs( 'API Response: ' . $new_guest_response );
+            $new_guest = json_decode( $new_guest_response, true );
+
+            if ( $new_guest && isset( $new_guest['id'] ) ) {
+                $guest_id = $new_guest['id'];
+                $this->put_program_logs( 'New guest created with ID: ' . $guest_id );
+            } else {
+                $this->put_program_logs( 'Failed to create new guest.' );
+            }
         }
 
         $this->put_program_logs( 'Guest ID: ' . $guest_id );
-
     }
 
-    public function search_a_guest( $email ) {
+    /**
+     * Search a guest on zenoti.
+     * @param string $email
+     * @return string
+     */
+    public function search_a_guest( string $email ) {
 
         $curl = curl_init();
         curl_setopt_array( $curl, array(
@@ -76,6 +132,32 @@ class Sync_Sales {
             CURLOPT_HTTPHEADER     => array(
                 'Authorization: apikey ' . $this->api_key,
                 'accept: application/json',
+            ),
+        ) );
+
+        $response = curl_exec( $curl );
+
+        curl_close( $curl );
+        return $response;
+    }
+
+    public function create_a_guest( $payload ) {
+
+        $curl = curl_init();
+        curl_setopt_array( $curl, array(
+            CURLOPT_URL            => "{$this->api_base_url}/guests",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode( $payload ),
+            CURLOPT_HTTPHEADER     => array(
+                'Authorization: apikey ' . $this->api_key,
+                'accept: application/json',
+                'content-type: application/json',
             ),
         ) );
 

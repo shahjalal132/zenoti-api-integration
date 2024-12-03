@@ -69,7 +69,7 @@ function wpb_plugin_activator() {
 }
 
 // Register activation hook
-// register_activation_hook( __FILE__, 'wpb_plugin_activator' );
+register_activation_hook( __FILE__, 'wpb_plugin_activator' );
 
 /**
  * The code that runs during plugin deactivation.
