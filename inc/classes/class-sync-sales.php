@@ -10,9 +10,9 @@ class Sync_Sales {
     use Singleton;
     use Program_Logs;
 
-    private $api_base_url = 'https://api.zenoti.com/v1';
-    private $api_key;
-    private $center_id;
+    protected $api_base_url = 'https://api.zenoti.com/v1';
+    protected $api_key;
+    protected $center_id;
 
     public function __construct() {
         $this->setup_hooks();

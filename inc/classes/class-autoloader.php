@@ -18,5 +18,6 @@ class Autoloader {
         // Admin_Top_Menu::get_instance();
         Admin_Sub_Menu::get_instance();
         Sync_Sales::get_instance();
+        Sync_Countries::get_instance();
     }
 }
