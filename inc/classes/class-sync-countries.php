@@ -11,7 +11,7 @@ class Sync_Countries {
     use Singleton;
     use Program_Logs;
 
-    protected $api_base_url = 'https://api.zenoti.com/v1';
+    protected $api_base_url;
     protected $api_key;
     protected $center_id;
 
@@ -24,8 +24,8 @@ class Sync_Countries {
         add_action( 'rest_api_init', [ $this, 'register_rest_route' ] );
 
         // get api credentials
-        $api_url       = get_option( 'api_url', 'https://api.zenoti.com/v1' );
-        $this->api_key = get_option( 'api_key' );
+        $this->api_base_url = get_option( 'api_url', 'https://api.zenoti.com/v1' );
+        $this->api_key      = get_option( 'api_key' );
     }
 
     public function register_rest_route() {

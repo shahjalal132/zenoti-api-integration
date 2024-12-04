@@ -171,5 +171,95 @@
       });
     });
     // save options end
+
+    // sync countries start
+    $("#sync_countries").on("click", function () {
+
+      // add loading spinner
+      const loader_button = $(".sync-countries-spinner-loader-wrapper");
+      $(loader_button).addClass("loader-spinner");
+
+      $.ajax({
+        type: "POST",
+        url: wpb_admin_localize.ajax_url,
+        data: {
+          action: "sync_countries",
+        },
+        success: function (response) {
+          // remove loading spinner
+          $(loader_button).removeClass("loader-spinner");
+
+          if (true === response.success) {
+            showToast({
+              type: "success",
+              timeout: 2000,
+              title: `${response.data}`,
+            });
+          } else {
+            showToast({
+              type: "error",
+              timeout: 2000,
+              title: `${response.data}`,
+            });
+          }
+        },
+        error: function (xhr, status, error) {
+          // remove loading spinner
+          $(loader_button).removeClass("loader-spinner");
+
+          showToast({
+            type: "error",
+            timeout: 2000,
+            title: `${response.data}`,
+          });
+        },
+      });
+    });
+    // sync countries end
+
+    // sync centers start
+    $("#sync_centers").on("click", function () {
+
+      // add loading spinner
+      const loader_button = $(".sync-centers-spinner-loader-wrapper");
+      $(loader_button).addClass("loader-spinner");
+
+      $.ajax({
+        type: "POST",
+        url: wpb_admin_localize.ajax_url,
+        data: {
+          action: "sync_centers",
+        },
+        success: function (response) {
+          // remove loading spinner
+          $(loader_button).removeClass("loader-spinner");
+
+          if (true === response.success) {
+            showToast({
+              type: "success",
+              timeout: 2000,
+              title: `${response.data}`,
+            });
+          } else {
+            showToast({
+              type: "error",
+              timeout: 2000,
+              title: `${response.data}`,
+            });
+          }
+        },
+        error: function (xhr, status, error) {
+          // remove loading spinner
+          $(loader_button).removeClass("loader-spinner");
+
+          showToast({
+            type: "error",
+            timeout: 2000,
+            title: `${response.data}`,
+          });
+        },
+      });
+    });
+    // sync centers end
   });
 })(jQuery);

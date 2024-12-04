@@ -10,6 +10,8 @@ class Admin_Sub_Menu {
     use Singleton;
     use Program_Logs;
 
+    private $base_url;
+
     public function __construct() {
         $this->setup_hooks();
     }
@@ -18,9 +20,13 @@ class Admin_Sub_Menu {
         add_action( 'admin_menu', [ $this, 'register_admin_sub_menu' ] );
         add_filter( 'plugin_action_links_' . PLUGIN_BASE_NAME, [ $this, 'add_plugin_action_links' ] );
 
+        $this->base_url = site_url() . '/wp-json/api/v1';
+
         // save api credentials
         add_action( 'wp_ajax_save_credentials', [ $this, 'save_api_credentials' ] );
         add_action( 'wp_ajax_save_options', [ $this, 'save_options' ] );
+        add_action( 'wp_ajax_sync_countries', [ $this, 'sync_countries' ] );
+        add_action( 'wp_ajax_sync_centers', [ $this, 'sync_centers' ] );
     }
 
     public function save_api_credentials() {
@@ -74,6 +80,32 @@ class Admin_Sub_Menu {
 
     public function menu_callback_html() {
         include_once PLUGIN_BASE_PATH . '/templates/template-admin-sub-menu.php';
+    }
+
+    public function sync_countries() {
+        $url      = $this->base_url . '/sync-countries';
+        $response = wp_remote_get( $url, [
+            'timeout' => 300,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( 'An error occurred! Please try again.' );
+        }
+
+        wp_send_json_success( 'Countries synced successfully!' );
+    }
+
+    public function sync_centers() {
+        $url      = $this->base_url . '/sync-centers';
+        $response = wp_remote_get( $url, [
+            'timeout' => 300,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( 'An error occurred! Please try again.' );
+        }
+
+        wp_send_json_success( 'Countries synced successfully!' );
     }
 
 }

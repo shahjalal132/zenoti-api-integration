@@ -1,10 +1,10 @@
 <?php
 
 $base_url = site_url() . '/wp-json/api/v1';
-$api_url  = get_option( 'api_url', 'https://api.zenoti.com/v1' );
-$api_key  = get_option( 'api_key' );
-$option1  = get_option( 'option1' );
-$option2  = get_option( 'option2' );
+$api_url = get_option( 'api_url', 'https://api.zenoti.com/v1' );
+$api_key = get_option( 'api_key' );
+$option1 = get_option( 'option1' );
+$option2 = get_option( 'option2' );
 
 ?>
 
