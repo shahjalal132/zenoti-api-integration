@@ -125,8 +125,8 @@ class Sync_Sales {
         }
 
         $this->guest_id = $guest_id;
-        $this->put_program_logs( 'Center ID: ' . $this->center_id );
-        $this->put_program_logs( 'Guest ID: ' . $guest_id );
+        // $this->put_program_logs( 'Center ID: ' . $this->center_id );
+        // $this->put_program_logs( 'Guest ID: ' . $guest_id );
 
         // Initialize sale_by_id and created_by_id
         $sale_by_id    = "f589ec0a-c3de-4b3e-9b4d-f2e51da11a9f";
@@ -163,7 +163,7 @@ class Sync_Sales {
 
         // Create invoice
         $invoice_response = $this->create_a_invoice( $invoice_payload );
-        $this->put_program_logs( "Invoice response: " . $invoice_response );
+        // $this->put_program_logs( "Invoice response: " . $invoice_response );
 
         // get all product of a center
         // $products_json = $this->get_all_products( $this->center_id );
@@ -300,19 +300,6 @@ class Sync_Sales {
     }
 
     public function create_a_invoice( $payload ) {
-
-        $sample_payload = '{
-            "center_id": "d3b50eac-ab88-4eb1-97e4-78f192b25bd8",
-            "guest_id": "D556BB97-FBA9-41A2-8AD0-B8929163B50E",
-            "products": [
-                {
-                    "id": "299fc416-5a11-4c91-a375-a38a5756d321",
-                    "quantity": 1,
-                    "sale_by_id": "f589ec0a-c3de-4b3e-9b4d-f2e51da11a9f"
-                }
-            ],
-            "created_by_id": "f589ec0a-c3de-4b3e-9b4d-f2e51da11a9f"
-        }';
 
         $curl = curl_init();
         curl_setopt_array( $curl, array(
