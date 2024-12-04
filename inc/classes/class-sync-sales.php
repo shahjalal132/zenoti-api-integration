@@ -125,19 +125,56 @@ class Sync_Sales {
         }
 
         $this->guest_id = $guest_id;
-        // $this->put_program_logs( 'Center ID: ' . $this->center_id );
-        // $this->put_program_logs( 'Guest ID: ' . $guest_id );
+        $this->put_program_logs( 'Center ID: ' . $this->center_id );
+        $this->put_program_logs( 'Guest ID: ' . $guest_id );
+
+        // Initialize sale_by_id and created_by_id
+        $sale_by_id    = "f589ec0a-c3de-4b3e-9b4d-f2e51da11a9f";
+        $created_by_id = "f589ec0a-c3de-4b3e-9b4d-f2e51da11a9f";
+
+        // Prepare invoice payload
+        $invoice_payload = [
+            "center_id"     => $this->center_id,
+            "guest_id"      => $guest_id,
+            "products"      => [],
+            "created_by_id" => $created_by_id,
+        ];
+
+        foreach ( $order->get_items() as $item ) {
+            // Get product object
+            $product = $item->get_product(); // This returns the WC_Product object
+
+            if ( $product ) {
+                // Get product SKU
+                $product_sku = $product->get_sku();
+                $quantity    = $item->get_quantity();
+
+                // Populate invoice payload products
+                $invoice_payload['products'][] = [
+                    "id"         => $product_sku, // Pass SKU as the ID
+                    "quantity"   => $quantity,
+                    "sale_by_id" => $sale_by_id,
+                ];
+            } else {
+                // Handle cases where the product object might not be available
+                $this->put_program_logs( 'Product not found for order item ID: ' . $item->get_id() );
+            }
+        }
+
+        // Create invoice
+        $invoice_response = $this->create_a_invoice( $invoice_payload );
+        $this->put_program_logs( "Invoice response: " . $invoice_response );
 
         // get all product of a center
-        $products_json = $this->get_all_products( $this->center_id );
+        // $products_json = $this->get_all_products( $this->center_id );
         // decode json
-        $products = json_decode( $products_json, true );
+        // $products = json_decode( $products_json, true );
 
         // $this->put_program_logs( 'Products: ' . print_r( $products, true ) );
 
         // prepare message
-        $message = sprintf( "Total %s products found for center %s", count( $products ), $this->center_id );
-        $this->put_program_logs( $message );
+        // $message = sprintf( "Total %s products found for center %s", count( $products ), $this->center_id );
+        // $this->put_program_logs( $message );
     }
 
     /**
@@ -260,6 +297,47 @@ class Sync_Sales {
         } while ( count( $products ) < $total_products );
 
         return json_encode( $products );
+    }
+
+    public function create_a_invoice( $payload ) {
+
+        $sample_payload = '{
+            "center_id": "d3b50eac-ab88-4eb1-97e4-78f192b25bd8",
+            "guest_id": "D556BB97-FBA9-41A2-8AD0-B8929163B50E",
+            "products": [
+                {
+                    "id": "299fc416-5a11-4c91-a375-a38a5756d321",
+                    "quantity": 1,
+                    "sale_by_id": "f589ec0a-c3de-4b3e-9b4d-f2e51da11a9f"
+                }
+            ],
+            "created_by_id": "f589ec0a-c3de-4b3e-9b4d-f2e51da11a9f"
+        }';
+
+        $curl = curl_init();
+        curl_setopt_array( $curl, array(
+            CURLOPT_URL            => "{$this->api_base_url}/invoices/products",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode( $payload ),
+            CURLOPT_HTTPHEADER     => array(
+                'Authorization: apikey ' . $this->api_key,
+                'accept: application/json',
+                'content-type: application/json',
+                'application_name: app',
+                'application_version: 1.0.0',
+            ),
+        ) );
+
+        $response = curl_exec( $curl );
+
+        curl_close( $curl );
+        return $response;
     }
 
 }
