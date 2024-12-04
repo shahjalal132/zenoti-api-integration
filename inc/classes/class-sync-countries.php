@@ -42,9 +42,9 @@ class Sync_Countries {
             'permission_callback' => '__return_true',
         ] );
 
-        register_rest_route( 'api/v1', '/sync-products', [
+        register_rest_route( 'api/v1', '/get-products', [
             'methods'             => 'GET',
-            'callback'            => [ $this, 'sync_products' ],
+            'callback'            => [ $this, 'get_products' ],
             'permission_callback' => '__return_true',
         ] );
 
@@ -200,7 +200,102 @@ class Sync_Countries {
         return true;
     }
 
-    public function sync_products() {
-        return "sync_products";
+    public function get_products() {
+
+        // get all centers from db
+        $centers = $this->get_all_centers_from_db();
+
+        if ( !empty( $centers ) ) {
+            // get products for each center
+            foreach ( $centers as $center ) {
+                $products = $this->get_all_products_from_api( $center );
+                $this->insert_products_to_db( $products, $center );
+            }
+
+            // return success message
+            return "Products synced successfully";
+        }
     }
+
+    public function get_all_centers_from_db() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_centers';
+        $result     = $wpdb->get_results( "SELECT center_id FROM $table_name" );
+
+        if ( empty( $result ) ) {
+            return "Didn't find any centers";
+        }
+
+        $centers = [];
+        foreach ( $result as $center ) {
+            $centers[] = $center->center_id;
+        }
+        return $centers;
+    }
+
+    public function get_all_products_from_api( string $center_id ) {
+
+        $products = [];
+        $page     = 1;
+        $per_page = 100;
+
+        do {
+            // Prepare the URL with pagination parameters
+            $url = "{$this->api_base_url}/centers/{$center_id}/products?page={$page}&size={$per_page}";
+
+            $curl = curl_init();
+            curl_setopt_array( $curl, array(
+                CURLOPT_URL            => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING       => '',
+                CURLOPT_MAXREDIRS      => 10,
+                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST  => 'GET',
+                CURLOPT_HTTPHEADER     => array(
+                    'Authorization: apikey ' . $this->api_key,
+                    'accept: application/json',
+                ),
+            ) );
+
+            $response = curl_exec( $curl );
+            curl_close( $curl );
+
+            // Decode the response
+            $response_array = json_decode( $response, true );
+
+            // Check if the response contains products
+            if ( isset( $response_array['products'] ) ) {
+                $products = array_merge( $products, $response_array['products'] );
+            }
+
+            // Check if more pages are available
+            $total_products = $response_array['page_info']['total'] ?? 0;
+            $page++;
+
+        } while ( count( $products ) < $total_products );
+
+        return $products;
+    }
+
+    public function insert_products_to_db( $products, $center_id ) {
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_products';
+
+        foreach ( $products as $product ) {
+            $data = array(
+                'product_id'   => $product['id'],
+                'center_id'    => $center_id,
+                'product_data' => json_encode( $product ),
+            );
+
+            $format = array( '%s', '%s', '%s' );
+
+            // Insert or update the product in the database
+            $wpdb->replace( $table_name, $data, $format );
+        }
+    }
+
 }

@@ -20,6 +20,11 @@
                 <td>Sync Centers</td>
                 <td><button class="copy-button">Copy</button></td>
             </tr>
+            <tr>
+                <td><?= $base_url ?>/get-products</td>
+                <td>Get Products</td>
+                <td><button class="copy-button">Copy</button></td>
+            </tr>
         </tbody>
     </table>
 </div>

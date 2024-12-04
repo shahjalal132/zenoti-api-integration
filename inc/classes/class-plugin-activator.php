@@ -59,8 +59,8 @@ class Plugin_Activator {
 
         $sql = "CREATE TABLE IF NOT EXISTS $table_name (
              id INT AUTO_INCREMENT,
-             product_id VARCHAR(255) NOT NULL,
-             center_id INT(1) NOT NULL,
+             product_id VARCHAR(255) UNIQUE NOT NULL,
+             center_id VARCHAR(255) NOT NULL,
              product_data TEXT NOT NULL,
              status VARCHAR(20) NOT NULL DEFAULT 'pending',
              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
