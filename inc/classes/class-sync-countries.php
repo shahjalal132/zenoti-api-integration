@@ -205,16 +205,24 @@ class Sync_Countries {
         // get all centers from db
         $centers = $this->get_all_centers_from_db();
 
+        // array to store all products
+        $all_products = [];
+
         if ( !empty( $centers ) ) {
             // get products for each center
             foreach ( $centers as $center ) {
-                $products = $this->get_all_products_from_api( $center );
+                $products     = $this->get_all_products_from_api( $center );
+                $all_products = array_merge( $all_products, $products );
                 $this->insert_products_to_db( $products, $center );
             }
-
-            // return success message
-            return "Products synced successfully";
         }
+
+        // $all_products = array_unique( $all_products, SORT_REGULAR );
+        // $this->put_program_logs( "Total Products is " . count( $all_products ) );
+
+        // return success message
+        return "Products synced successfully";
+
     }
 
     public function get_all_centers_from_db() {
@@ -285,16 +293,11 @@ class Sync_Countries {
         $table_name = $wpdb->prefix . 'sync_products';
 
         foreach ( $products as $product ) {
-            $data = array(
-                'product_id'   => $product['id'],
-                'center_id'    => $center_id,
-                'product_data' => json_encode( $product ),
-            );
 
-            $format = array( '%s', '%s', '%s' );
+            // prepare the SQL statement
+            $sql = $wpdb->prepare( "INSERT INTO $table_name (product_id, center_id, product_data) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE product_data = VALUES(product_data)", $product['id'], $center_id, json_encode( $product ) );
 
-            // Insert or update the product in the database
-            $wpdb->replace( $table_name, $data, $format );
+            $wpdb->query( $sql );
         }
     }
 
