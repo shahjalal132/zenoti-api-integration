@@ -15,6 +15,7 @@ class Sync_Sales {
     protected $center_ids;
     protected $center_id;
     protected $guest_id;
+    private $total;
 
     public function __construct() {
         $this->setup_hooks();
@@ -148,6 +149,8 @@ class Sync_Sales {
                 // Get product SKU
                 $product_sku = $product->get_sku();
                 $quantity    = $item->get_quantity();
+                // get total
+                $this->total += $product->get_price() * $quantity;
 
                 // Populate invoice payload products
                 $invoice_payload['products'][] = [
@@ -160,6 +163,8 @@ class Sync_Sales {
                 $this->put_program_logs( 'Product not found for order item ID: ' . $item->get_id() );
             }
         }
+
+        // $this->put_program_logs( 'Total: ' . $this->total );
 
         // Create invoice
         $invoice_response = $this->create_a_invoice( $invoice_payload );
