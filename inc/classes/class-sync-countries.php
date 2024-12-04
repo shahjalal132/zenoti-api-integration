@@ -42,6 +42,12 @@ class Sync_Countries {
             'permission_callback' => '__return_true',
         ] );
 
+        register_rest_route( 'api/v1', '/sync-products', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'sync_products' ],
+            'permission_callback' => '__return_true',
+        ] );
+
     }
 
     public function sync_countries( $request ) {
@@ -192,5 +198,9 @@ class Sync_Countries {
         }
 
         return true;
+    }
+
+    public function sync_products() {
+        return "sync_products";
     }
 }

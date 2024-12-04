@@ -51,4 +51,25 @@ class Plugin_Activator {
         dbDelta( $sql );
     }
 
+    public static function create_products_table() {
+        // create sync_centers table
+        global $wpdb;
+        $table_name      = $wpdb->prefix . 'sync_products';
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+             id INT AUTO_INCREMENT,
+             product_id VARCHAR(255) NOT NULL,
+             center_id INT(1) NOT NULL,
+             product_data TEXT NOT NULL,
+             status VARCHAR(20) NOT NULL DEFAULT 'pending',
+             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+             PRIMARY KEY (id)
+         ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
+    }
+
 }

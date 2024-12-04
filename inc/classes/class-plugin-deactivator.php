@@ -21,4 +21,10 @@ class Plugin_Deactivator {
         $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
     }
 
+    public static function remove_products_table() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_products';
+        $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
+    }
+
 }
