@@ -10,7 +10,7 @@ class Sync_Sales {
     use Singleton;
     use Program_Logs;
 
-    protected $api_base_url = 'https://api.zenoti.com/v1';
+    protected $api_base_url;
     protected $api_key;
     protected $center_ids;
     protected $center_id;
@@ -28,8 +28,8 @@ class Sync_Sales {
         $this->center_ids = $this->get_center_ids_from_db();
 
         // get api credentials
-        $api_url       = get_option( 'api_url', 'https://api.zenoti.com/v1' );
-        $this->api_key = get_option( 'api_key' );
+        $this->api_base_url = get_option( 'api_url', 'https://api.zenoti.com/v1' );
+        $this->api_key      = get_option( 'api_key' );
     }
 
     /**
@@ -69,6 +69,12 @@ class Sync_Sales {
 
                 // check if guest exists
                 if ( $guest && isset( $guest['page_Info']['total'] ) && $guest['page_Info']['total'] > 0 ) {
+
+                    // prepare message
+                    $message = sprintf( "Guest found for email: %s id: %s", $customer_email, $guest['guests'][0]['id'] );
+                    $this->put_program_logs( $message );
+
+                    // get guest id
                     $guest_id        = $guest['guests'][0]['id'];
                     $this->center_id = $center_id;
                     break; // Exit the loop if a guest is found
@@ -107,6 +113,12 @@ class Sync_Sales {
             $new_guest          = json_decode( $new_guest_response, true );
 
             if ( $new_guest && isset( $new_guest['id'] ) && isset( $new_guest['center_id'] ) ) {
+
+                // prepare message
+                $message = sprintf( "Guest created for email: %s id: %s", $customer_email, $new_guest['id'] );
+                $this->put_program_logs( $message );
+
+                // get guest id
                 $guest_id        = $new_guest['id'];
                 $this->center_id = $new_guest['center_id'];
             }
@@ -115,6 +127,17 @@ class Sync_Sales {
         $this->guest_id = $guest_id;
         // $this->put_program_logs( 'Center ID: ' . $this->center_id );
         // $this->put_program_logs( 'Guest ID: ' . $guest_id );
+
+        // get all product of a center
+        $products_json = $this->get_all_products( $this->center_id );
+        // decode json
+        $products = json_decode( $products_json, true );
+
+        // $this->put_program_logs( 'Products: ' . print_r( $products, true ) );
+
+        // prepare message
+        $message = sprintf( "Total %s products found for center %s", count( $products ), $this->center_id );
+        $this->put_program_logs( $message );
     }
 
     /**
@@ -191,6 +214,52 @@ class Sync_Sales {
         }, $result );
 
         return $center_ids;
+    }
+
+    public function get_all_products( string $center_id ) {
+
+        $products = [];
+        $page     = 1;
+        $per_page = 100;
+
+        do {
+            // Prepare the URL with pagination parameters
+            $url = "{$this->api_base_url}/centers/{$center_id}/products?page={$page}&size={$per_page}";
+
+            $curl = curl_init();
+            curl_setopt_array( $curl, array(
+                CURLOPT_URL            => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING       => '',
+                CURLOPT_MAXREDIRS      => 10,
+                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST  => 'GET',
+                CURLOPT_HTTPHEADER     => array(
+                    'Authorization: apikey ' . $this->api_key,
+                    'accept: application/json',
+                ),
+            ) );
+
+            $response = curl_exec( $curl );
+            curl_close( $curl );
+
+            // Decode the response
+            $response_array = json_decode( $response, true );
+
+            // Check if the response contains products
+            if ( isset( $response_array['products'] ) ) {
+                $products = array_merge( $products, $response_array['products'] );
+            }
+
+            // Check if more pages are available
+            $total_products = $response_array['page_info']['total'] ?? 0;
+            $page++;
+
+        } while ( count( $products ) < $total_products );
+
+        return json_encode( $products );
     }
 
 }
