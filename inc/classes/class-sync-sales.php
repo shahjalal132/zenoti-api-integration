@@ -147,6 +147,11 @@ class Sync_Sales {
                 // Get product SKU
                 $product_sku = $product->get_sku();
                 $quantity    = $item->get_quantity();
+
+                // get product id by product code as product sku. (backward compatibility)
+                // $product_id = $this->get_product_sku_by_product_code( $product_sku );
+                // $this->put_program_logs( 'product_id: ' . $product_id );
+
                 // get total
                 $this->total += $product->get_price() * $quantity;
 
@@ -328,6 +333,20 @@ class Sync_Sales {
 
         curl_close( $curl );
         return $response;
+    }
+
+    public function get_product_sku_by_product_code( $product_code ) {
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_products';
+
+        try {
+            $product = $wpdb->get_row( "SELECT product_id FROM $table_name WHERE product_code = '{$product_code}'" );
+            return $product->product_id;
+        } catch (\Exception $e) {
+            $this->put_program_logs( $e->getMessage() );
+            return '';
+        }
     }
 
 }

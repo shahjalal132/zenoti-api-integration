@@ -296,7 +296,6 @@ class Sync_Inventory {
             ];
         }
     }
-
     public function mark_inventory_as_synced( $product_code ) {
 
         global $wpdb;
