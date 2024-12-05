@@ -1,3 +1,9 @@
+<?php
+
+$base_url = site_url() . '/wp-json/api/v1';
+
+?>
+
 <h4 class="common-title">Endpoints</h4>
 
 <div class="endpoints-wrapper">
