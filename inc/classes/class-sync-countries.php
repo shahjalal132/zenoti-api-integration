@@ -208,10 +208,10 @@ class Sync_Countries {
 
         // insert products to database
         if ( !empty( $products ) ) {
-            $this->insert_products_to_db( $products, $this->center_id );
+            $this->insert_products_to_db( $products );
         }
         // return success message
-        return "Products synced successfully";
+        return "Products inserted to database successfully";
 
     }
 
@@ -277,7 +277,7 @@ class Sync_Countries {
         return $products;
     }
 
-    public function insert_products_to_db( $products, $center_id ) {
+    public function insert_products_to_db( $products ) {
 
         global $wpdb;
         $table_name = $wpdb->prefix . 'sync_products';
@@ -285,7 +285,15 @@ class Sync_Countries {
         foreach ( $products as $product ) {
 
             // prepare the SQL statement
-            $sql = $wpdb->prepare( "INSERT INTO $table_name (product_id, center_id, product_data) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE product_data = VALUES(product_data)", $product['id'], $center_id, json_encode( $product ) );
+            $sql = $wpdb->prepare(
+                "INSERT INTO $table_name (product_id, product_code, product_data) 
+            VALUES (%s, %s, %s) 
+            ON DUPLICATE KEY UPDATE 
+            product_data = VALUES(product_data)",
+                $product['id'],
+                $product['code'],
+                json_encode( $product )
+            );
 
             $wpdb->query( $sql );
         }
