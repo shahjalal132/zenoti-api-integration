@@ -127,6 +127,7 @@
     $("#save_options").on("click", function () {
       const option1 = $("#option1").val();
       const option2 = $("#option2").val();
+      const option3 = $("#option3").val();
 
       // add loading spinner
       const loader_button = $(".spinner-loader-wrapper");
@@ -139,6 +140,7 @@
           action: "save_options",
           option1: option1,
           option2: option2,
+          option3: option3,
         },
         success: function (response) {
           // remove loading spinner

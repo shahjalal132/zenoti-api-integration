@@ -49,9 +49,11 @@ class Admin_Sub_Menu {
 
         $option1 = sanitize_text_field( $_POST['option1'] );
         $option2 = sanitize_text_field( $_POST['option2'] );
+        $option3 = sanitize_text_field( $_POST['option3'] );
 
         update_option( 'option1', $option1 );
         update_option( 'option2', $option2 );
+        update_option( 'option3', $option3 );
 
         wp_send_json_success( 'Options saved successfully!' );
         die();

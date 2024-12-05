@@ -2,6 +2,7 @@
 
 $option1 = get_option( 'option1', '54410559-1d01-4ff8-b829-10f0f36bb19b' );
 $option2 = get_option( 'option2', 'd3b50eac-ab88-4eb1-97e4-78f192b25bd8' );
+$option3 = get_option( 'option3', 1 );
 
 ?>
 
@@ -17,6 +18,11 @@ $option2 = get_option( 'option2', 'd3b50eac-ab88-4eb1-97e4-78f192b25bd8' );
         <label for="option2">Center ID</label>
         <input type="text" class="common-form-input" name="option2" id="option2" placeholder="Option2"
             value="<?= $option2 ?>">
+    </div>
+    <div class="common-input-group mt-20">
+        <label for="option3">Limit</label>
+        <input type="number" class="common-form-input" name="option3" id="option3" placeholder="Option3"
+            value="<?= $option3 ?>">
     </div>
 
     <button type="button" class="save-btn mt-20 button-flex" id="save_options">

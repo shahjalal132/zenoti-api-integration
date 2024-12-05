@@ -154,29 +154,36 @@ class Sync_Inventory {
                 ];
             }
 
-            foreach ( $inventory_items as $inventory_item ) {
+            $updated_products   = [];
+            $not_found_products = [];
 
+            foreach ( $inventory_items as $inventory_item ) {
                 $product_code = $inventory_item->product_code;
                 $quantity     = $inventory_item->total_quantity;
 
-                // get product sku by product code
-                // $product_sku = $this->get_product_sku_by_product_code( $product_code );
-                // $this->put_program_logs('product id: ' . $product_sku);
-
-                // Update inventory in WooCommerce
+                // Sync inventory to WooCommerce
                 $sync_result = $this->sync_inventory_to_woocommerce( $product_code, $quantity );
 
-                if ( !$sync_result['success'] ) {
-                    return $sync_result; // Return the error message if syncing fails
+                if ( $sync_result['success'] ) {
+                    $updated_products[] = $product_code;
+                    $this->mark_inventory_as_synced( $product_code ); // Mark as synced
+                } else {
+                    $not_found_products[] = $product_code;
                 }
+            }
 
-                // Mark the item as synced in the database
-                $this->mark_inventory_as_synced( $product_code );
+            // Prepare the summary message
+            $message = __( 'Inventory sync completed.', 'zenoti' );
+            if ( !empty( $updated_products ) ) {
+                $message .= ' ' . __( 'Updated products: ', 'zenoti' ) . implode( ', ', $updated_products ) . '.';
+            }
+            if ( !empty( $not_found_products ) ) {
+                $message .= ' ' . __( 'Products not found: ', 'zenoti' ) . implode( ', ', $not_found_products ) . '.';
             }
 
             return [
                 'success' => true,
-                'message' => __( "Inventory successfully synced with WooCommerce. product sku: {$product_code} quantity: {$quantity}", 'zenoti' ),
+                'message' => $message,
             ];
         } catch (\Exception $e) {
             return [
@@ -192,7 +199,7 @@ class Sync_Inventory {
         $table_name = $wpdb->prefix . 'sync_inventory';
 
         try {
-            $limit   = 1; // Limit the number of items processed
+            $limit   = get_option( 'option3', 1 );
             $results = $wpdb->get_results(
                 "SELECT product_code, store_quantity, floor_quantity, total_quantity FROM $table_name WHERE is_synced = 0 LIMIT {$limit}",
                 OBJECT
