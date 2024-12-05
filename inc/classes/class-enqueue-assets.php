@@ -64,7 +64,7 @@ class Enqueue_Assets {
         wp_enqueue_script( "wpb-public-js", PLUGIN_PUBLIC_ASSETS_URL . "/js/public-script.js", [ 'jquery' ], time(), true );
         wp_localize_script( "wpb-public-js", "wpb_public_localize", array(
             "ajax_url" => admin_url( "admin-ajax.php" ),
-            "nonce"    => wp_create_nonce(),
+            "nonce"    => wp_create_nonce('sync_leads'),
         ) );
 
     }

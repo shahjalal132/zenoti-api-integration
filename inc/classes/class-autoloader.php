@@ -20,5 +20,6 @@ class Autoloader {
         Sync_Sales::get_instance();
         Sync_Countries::get_instance();
         Sync_Inventory::get_instance();
+        Sync_Leads::get_instance();
     }
 }

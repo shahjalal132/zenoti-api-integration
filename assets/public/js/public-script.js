@@ -2,7 +2,7 @@
   $(document).ready(function () {
     // Lead generation form start
     $(".wpcf7-submit").on("click", function (e) {
-      e.preventDefault(); // Prevent default form submission
+      // e.preventDefault();
 
       // Get the form data
       const form = $(this).closest("form");
@@ -14,7 +14,7 @@
       let firstName = '';
       let lastName = '';
       let email = '';
-      let phone = '';
+      let phone = null;
       let city = '';
       let country = '';
 
