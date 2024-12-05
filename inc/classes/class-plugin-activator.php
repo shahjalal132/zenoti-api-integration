@@ -97,4 +97,28 @@ class Plugin_Activator {
         dbDelta( $sql );
     }
 
+    public static function create_leads_table() {
+        // create sync_centers table
+        global $wpdb;
+        $table_name      = $wpdb->prefix . 'sync_leads';
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+             id INT AUTO_INCREMENT,
+             first_name VARCHAR(30) NOT NULL,
+             last_name VARCHAR(30) NOT NULL,
+             email VARCHAR(50) NULL,
+             phone VARCHAR(20) NULL,
+             city VARCHAR(50) NOT NULL,
+             country VARCHAR(50) NOT NULL,
+             is_synced TINYINT(1) NOT NULL DEFAULT '0',
+             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+             PRIMARY KEY (id)
+         ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
+    }
+
 }

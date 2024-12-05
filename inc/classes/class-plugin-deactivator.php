@@ -33,4 +33,10 @@ class Plugin_Deactivator {
         $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
     }
 
+    public static function remove_leads_table() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_leads';
+        $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
+    }
+
 }
