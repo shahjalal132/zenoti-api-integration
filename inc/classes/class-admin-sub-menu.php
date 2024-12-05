@@ -50,10 +50,6 @@ class Admin_Sub_Menu {
         $option1 = sanitize_text_field( $_POST['option1'] );
         $option2 = sanitize_text_field( $_POST['option2'] );
 
-        if ( empty( $option1 ) || empty( $option2 ) ) {
-            wp_send_json_error( 'An error occurred! Please fill all the fields.' );
-        }
-
         update_option( 'option1', $option1 );
         update_option( 'option2', $option2 );
 

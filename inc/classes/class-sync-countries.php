@@ -26,6 +26,7 @@ class Sync_Countries {
         // get api credentials
         $this->api_base_url = get_option( 'api_url', 'https://api.zenoti.com/v1' );
         $this->api_key      = get_option( 'api_key' );
+        $this->center_id    = get_option( 'option2' );
     }
 
     public function register_rest_route() {
@@ -202,24 +203,13 @@ class Sync_Countries {
 
     public function get_products() {
 
-        // get all centers from db
-        $centers = $this->get_all_centers_from_db();
+        // get products from api based on center id
+        $products = $this->get_all_products_from_api( $this->center_id );
 
-        // array to store all products
-        $all_products = [];
-
-        if ( !empty( $centers ) ) {
-            // get products for each center
-            foreach ( $centers as $center ) {
-                $products     = $this->get_all_products_from_api( $center );
-                $all_products = array_merge( $all_products, $products );
-                $this->insert_products_to_db( $products, $center );
-            }
+        // insert products to database
+        if ( !empty( $products ) ) {
+            $this->insert_products_to_db( $products, $this->center_id );
         }
-
-        // $all_products = array_unique( $all_products, SORT_REGULAR );
-        // $this->put_program_logs( "Total Products is " . count( $all_products ) );
-
         // return success message
         return "Products synced successfully";
 

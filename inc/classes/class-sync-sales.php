@@ -16,6 +16,7 @@ class Sync_Sales {
     protected $center_id;
     protected $guest_id;
     private $total;
+    private $employee_id;
 
     public function __construct() {
         $this->setup_hooks();
@@ -31,6 +32,7 @@ class Sync_Sales {
         // get api credentials
         $this->api_base_url = get_option( 'api_url', 'https://api.zenoti.com/v1' );
         $this->api_key      = get_option( 'api_key' );
+        $this->employee_id  = get_option( 'option1' );
     }
 
     /**
@@ -129,16 +131,12 @@ class Sync_Sales {
         // $this->put_program_logs( 'Center ID: ' . $this->center_id );
         // $this->put_program_logs( 'Guest ID: ' . $guest_id );
 
-        // Initialize sale_by_id and created_by_id
-        $sale_by_id    = "f589ec0a-c3de-4b3e-9b4d-f2e51da11a9f";
-        $created_by_id = "f589ec0a-c3de-4b3e-9b4d-f2e51da11a9f";
-
         // Prepare invoice payload
         $invoice_payload = [
             "center_id"     => $this->center_id,
             "guest_id"      => $guest_id,
             "products"      => [],
-            "created_by_id" => $created_by_id,
+            "created_by_id" => $this->employee_id,
         ];
 
         foreach ( $order->get_items() as $item ) {
@@ -154,9 +152,9 @@ class Sync_Sales {
 
                 // Populate invoice payload products
                 $invoice_payload['products'][] = [
-                    "id"         => $product_sku, // Pass SKU as the ID
+                    "id"         => $product_sku,
                     "quantity"   => $quantity,
-                    "sale_by_id" => $sale_by_id,
+                    "sale_by_id" => $this->employee_id,
                 ];
             } else {
                 // Handle cases where the product object might not be available
