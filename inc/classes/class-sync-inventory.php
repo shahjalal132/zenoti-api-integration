@@ -9,6 +9,7 @@ class Sync_Inventory {
 
     use Singleton;
     use Program_Logs;
+
     protected $api_base_url;
     protected $api_key;
     protected $center_id;
@@ -18,18 +19,16 @@ class Sync_Inventory {
     }
 
     public function setup_hooks() {
-
         // Register REST API action
         add_action( 'rest_api_init', [ $this, 'register_rest_route' ] );
 
-        // get api credentials
+        // Get API credentials
         $this->api_base_url = get_option( 'api_url', 'https://api.zenoti.com/v1' );
         $this->api_key      = get_option( 'api_key' );
         $this->center_id    = get_option( 'option2' );
     }
 
     public function register_rest_route() {
-
         register_rest_route( 'api/v1', '/get-inventory', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'get_inventory' ],
@@ -38,48 +37,69 @@ class Sync_Inventory {
     }
 
     public function get_inventory() {
+        // Validate API credentials
+        if ( empty( $this->api_key ) || empty( $this->center_id ) ) {
+            return new \WP_Error(
+                'missing_credentials',
+                __( 'API key or Center ID is not set in options.', 'zenoti' ),
+                [ 'status' => 400 ]
+            );
+        }
 
-        // get inventory from api based on center id
-        $inventory = $this->get_all_inventory_from_api( $this->center_id );
+        try {
+            // Get inventory from API
+            $inventory = $this->get_all_inventory_from_api( $this->center_id );
 
-        // insert inventory to database
-        if ( !empty( $inventory ) ) {
+            if ( empty( $inventory ) ) {
+                return new \WP_Error(
+                    'empty_inventory',
+                    __( 'No inventory data retrieved from the API.', 'zenoti' ),
+                    [ 'status' => 404 ]
+                );
+            }
+
+            // Insert inventory into the database
             $this->insert_inventory_to_db( $inventory );
+
+            return [
+                'success' => true,
+                'message' => __( 'Inventory inserted into the database successfully.', 'zenoti' ),
+            ];
+        } catch (\Exception $e) {
+            return new \WP_Error(
+                'sync_error',
+                __( 'An error occurred while syncing inventory: ', 'zenoti' ) . $e->getMessage(),
+                [ 'status' => 500 ]
+            );
         }
     }
 
     public function get_all_inventory_from_api( $center_id ) {
 
-        // get date
-        $date = date( 'Y-m-d H:i:s' );
-        $date = urlencode( $date );
+        $date = urlencode( date( 'Y-m-d H:i:s' ) );
 
         $curl = curl_init();
-        curl_setopt_array( $curl, array(
+        curl_setopt_array( $curl, [
             CURLOPT_URL            => "{$this->api_base_url}/inventory/stock?inventory_date={$date}&center_id={$center_id}",
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING       => '',
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => 'GET',
-            CURLOPT_HTTPHEADER     => array(
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_HTTPHEADER     => [
                 'Authorization: apikey ' . $this->api_key,
                 'accept: application/json',
-            ),
-        ) );
+            ],
+        ] );
 
-        $response = curl_exec( $curl );
+        $response  = curl_exec( $curl );
+        $http_code = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
 
         curl_close( $curl );
 
-        // decode response
-        $inventory       = json_decode( $response, true );
-        $inventory_items = $inventory['list'];
-        // $this->put_program_logs( 'Total Inventory items: ' . count( $inventory_items ) );
+        if ( $http_code !== 200 ) {
+            throw new \Exception( __( 'API Request failed with status code: ', 'zenoti' ) . $http_code );
+        }
 
-        return $inventory_items;
+        $inventory = json_decode( $response, true );
+        return $inventory['list'] ?? [];
     }
 
     public function insert_inventory_to_db( $inventory_items ) {
@@ -87,20 +107,30 @@ class Sync_Inventory {
         global $wpdb;
         $table_name = $wpdb->prefix . 'sync_inventory';
 
-        // insert inventory
-        foreach ( $inventory_items as $inventory_item ) {
-
-            echo '<pre>';
-            print_r( $inventory_item );
-            die();
+        // Truncate table with error handling
+        $truncate_result = $wpdb->query( "TRUNCATE TABLE $table_name" );
+        if ( $truncate_result === false ) {
+            throw new \Exception( __( 'Failed to truncate the inventory table.', 'zenoti' ) );
         }
 
-        $this->put_program_logs(
-            sprintf(
-                'Inventory items inserted to database successfully. Total: %d',
-                count( $inventory_items )
-            )
-        );
-    }
+        // Insert inventory items
+        foreach ( $inventory_items as $inventory_item ) {
+            $insert_result = $wpdb->insert(
+                $table_name,
+                [
+                    'center_code'    => $inventory_item['center_code'] ?? '',
+                    'product_code'   => $inventory_item['product_code'] ?? '',
+                    'store_quantity' => $inventory_item['store_quantity'] ?? 0,
+                    'floor_quantity' => $inventory_item['floor_quantity'] ?? 0,
+                    'total_quantity' => $inventory_item['total_quantity'] ?? 0,
+                    'inventory_data' => json_encode( $inventory_item ),
+                    'is_synced'      => 0,
+                ]
+            );
 
+            if ( $insert_result === false ) {
+                throw new \Exception( __( 'Failed to insert inventory data for product: ', 'zenoti' ) . ( $inventory_item['product_code'] ?? 'unknown' ) );
+            }
+        }
+    }
 }
