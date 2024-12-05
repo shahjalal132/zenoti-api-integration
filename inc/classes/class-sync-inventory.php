@@ -159,6 +159,10 @@ class Sync_Inventory {
                 $product_code = $inventory_item->product_code;
                 $quantity     = $inventory_item->total_quantity;
 
+                // get product sku by product code
+                // $product_sku = $this->get_product_sku_by_product_code( $product_code );
+                // $this->put_program_logs('product id: ' . $product_sku);
+
                 // Update inventory in WooCommerce
                 $sync_result = $this->sync_inventory_to_woocommerce( $product_code, $quantity );
 
@@ -172,7 +176,7 @@ class Sync_Inventory {
 
             return [
                 'success' => true,
-                'message' => __( 'Inventory successfully synced with WooCommerce.', 'zenoti' ),
+                'message' => __( "Inventory successfully synced with WooCommerce. product sku: {$product_code} quantity: {$quantity}", 'zenoti' ),
             ];
         } catch (\Exception $e) {
             return [
@@ -205,36 +209,84 @@ class Sync_Inventory {
         }
     }
 
-    public function sync_inventory_to_woocommerce( $product_code, $quantity ) {
-        try {
-            // Get product by SKU
-            $product = wc_get_product( $product_code );
+    public function get_product_sku_by_product_code( $product_code ) {
 
-            if ( !$product ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_products';
+
+        try {
+            $product = $wpdb->get_row( "SELECT product_id FROM $table_name WHERE product_code = '{$product_code}'" );
+            return $product->product_id;
+        } catch (\Exception $e) {
+            $this->put_program_logs( $e->getMessage() );
+            return '';
+        }
+    }
+
+    public function sync_inventory_to_woocommerce( $product_sku, $quantity ) {
+
+        // $this->put_program_logs( 'Product Code: ' . $product_sku . ' Quantity: ' . $quantity );
+
+        try {
+            // Query for the product using its SKU
+            $args = [
+                'post_type'      => 'product',
+                'meta_query'     => [
+                    [
+                        'key'     => '_sku',
+                        'value'   => $product_sku,
+                        'compare' => '=',
+                    ],
+                ],
+                'posts_per_page' => 1, // Optimize query to return only one product
+            ];
+
+            $query = new \WP_Query( $args );
+
+            if ( $query->have_posts() ) {
+                $query->the_post();
+
+                $product_id = get_the_ID();
+
+                // Ensure manage stock is enabled
+                update_post_meta( $product_id, '_manage_stock', 'yes' );
+
+                // Update the stock quantity
+                update_post_meta( $product_id, '_stock', $quantity );
+
+                // Update stock status based on quantity
+                if ( $quantity <= 0 ) {
+                    update_post_meta( $product_id, '_stock_status', 'outofstock' );
+                } else {
+                    update_post_meta( $product_id, '_stock_status', 'instock' );
+                }
+
+                // Clean cache to reflect changes
+                wc_delete_product_transients( $product_id );
+
+                wp_reset_postdata();
+
+                return [
+                    'success' => true,
+                    'message' => __( 'Product stock updated successfully for SKU: ', 'zenoti' ) . $product_sku,
+                ];
+            } else {
+                wp_reset_postdata();
                 return [
                     'success' => false,
-                    'message' => __( 'Product with SKU ', 'zenoti' ) . $product_code . __( ' not found in WooCommerce.', 'zenoti' ),
+                    'message' => __( 'Product with SKU ', 'zenoti' ) . $product_sku . __( ' not found in WooCommerce.', 'zenoti' ),
                 ];
             }
-
-            // Update stock quantity
-            $product->set_stock_quantity( $quantity );
-            $product->save();
-
-            return [
-                'success' => true,
-                'message' => __( 'Product stock updated successfully for SKU: ', 'zenoti' ) . $product_code,
-            ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => __( 'Failed to update product stock for SKU: ', 'zenoti' ) . $product_code . '. ' . $e->getMessage(),
+                'message' => __( 'Failed to update product stock for SKU: ', 'zenoti' ) . $product_sku . '. ' . $e->getMessage(),
             ];
         }
     }
 
     public function mark_inventory_as_synced( $product_code ) {
-        
+
         global $wpdb;
         $table_name = $wpdb->prefix . 'sync_inventory';
 
