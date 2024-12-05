@@ -113,6 +113,7 @@ class Sync_Countries {
                 'country_id'   => $country['id'],
                 'phone_code'   => $country['phone_code'],
                 'country_code' => $country['country_code'],
+                'country_name' => $country['name'],
                 'country_data' => json_encode( $country ),
             ] );
 

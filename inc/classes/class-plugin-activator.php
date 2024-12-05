@@ -20,6 +20,7 @@ class Plugin_Activator {
             country_id INT NOT NULL,
             phone_code INT NOT NULL,
             country_code VARCHAR(255) NOT NULL,
+            country_name VARCHAR(255) NOT NULL,
             country_data TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
