@@ -68,6 +68,7 @@ function wpb_plugin_activator() {
     Plugin_Activator::activate();
     Plugin_Activator::create_centers_table();
     Plugin_Activator::create_products_table();
+    Plugin_Activator::create_inventory_table();
 }
 
 // Register activation hook
@@ -82,6 +83,7 @@ function wpb_plugin_deactivator() {
     Plugin_Deactivator::deactivate();
     Plugin_Deactivator::remove_centers_table();
     Plugin_Deactivator::remove_products_table();
+    Plugin_Deactivator::remove_inventory_table();
 }
 
 // Register deactivation hook

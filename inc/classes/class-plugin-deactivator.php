@@ -27,4 +27,10 @@ class Plugin_Deactivator {
         $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
     }
 
+    public static function remove_inventory_table() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_inventory';
+        $wpdb->query( "DROP TABLE IF EXISTS $table_name" );
+    }
+
 }

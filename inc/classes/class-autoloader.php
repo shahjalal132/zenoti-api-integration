@@ -19,5 +19,6 @@ class Autoloader {
         Admin_Sub_Menu::get_instance();
         Sync_Sales::get_instance();
         Sync_Countries::get_instance();
+        Sync_Inventory::get_instance();
     }
 }

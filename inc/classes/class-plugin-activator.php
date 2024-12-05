@@ -72,4 +72,27 @@ class Plugin_Activator {
         dbDelta( $sql );
     }
 
+    public static function create_inventory_table() {
+        // create sync_centers table
+        global $wpdb;
+        $table_name      = $wpdb->prefix . 'sync_inventory';
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+             id INT AUTO_INCREMENT,
+             center_code VARCHAR(255) UNIQUE NOT NULL,
+             product_code VARCHAR(20) NOT NULL,
+             store_quantity DECIMAL(10,2) NULL,
+             floor_quantity DECIMAL(10,2) NULL,
+             total_quantity DECIMAL(10,2) NULL,
+             is_synced TINYINT(1) NOT NULL DEFAULT '0',
+             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+             PRIMARY KEY (id)
+         ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
+    }
+
 }
