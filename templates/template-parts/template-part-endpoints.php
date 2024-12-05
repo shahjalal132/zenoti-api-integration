@@ -31,6 +31,11 @@ $base_url = site_url() . '/wp-json/api/v1';
                 <td>Get Products</td>
                 <td><button class="copy-button">Copy</button></td>
             </tr>
+            <tr>
+                <td><?= $base_url ?>/get-inventory</td>
+                <td>Get Products</td>
+                <td><button class="copy-button">Copy</button></td>
+            </tr>
         </tbody>
     </table>
 </div>

@@ -19,6 +19,7 @@ class Sync_Inventory {
     }
 
     public function setup_hooks() {
+
         // Register REST API action
         add_action( 'rest_api_init', [ $this, 'register_rest_route' ] );
 
@@ -29,9 +30,16 @@ class Sync_Inventory {
     }
 
     public function register_rest_route() {
+
         register_rest_route( 'api/v1', '/get-inventory', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'get_inventory' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'api/v1', '/sync-inventory', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'sync_inventory' ],
             'permission_callback' => '__return_true',
         ] );
     }
@@ -133,4 +141,118 @@ class Sync_Inventory {
             }
         }
     }
+
+    public function sync_inventory() {
+        try {
+            // Get inventory items from the database
+            $inventory_items = $this->get_inventory_items_from_db();
+
+            if ( empty( $inventory_items ) ) {
+                return [
+                    'success' => false,
+                    'message' => __( 'No unsynced inventory items found in the database.', 'zenoti' ),
+                ];
+            }
+
+            foreach ( $inventory_items as $inventory_item ) {
+
+                $product_code = $inventory_item->product_code;
+                $quantity     = $inventory_item->total_quantity;
+
+                // Update inventory in WooCommerce
+                $sync_result = $this->sync_inventory_to_woocommerce( $product_code, $quantity );
+
+                if ( !$sync_result['success'] ) {
+                    return $sync_result; // Return the error message if syncing fails
+                }
+
+                // Mark the item as synced in the database
+                $this->mark_inventory_as_synced( $product_code );
+            }
+
+            return [
+                'success' => true,
+                'message' => __( 'Inventory successfully synced with WooCommerce.', 'zenoti' ),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => __( 'An error occurred during inventory syncing: ', 'zenoti' ) . $e->getMessage(),
+            ];
+        }
+    }
+
+    public function get_inventory_items_from_db() {
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_inventory';
+
+        try {
+            $limit   = 1; // Limit the number of items processed
+            $results = $wpdb->get_results(
+                "SELECT product_code, store_quantity, floor_quantity, total_quantity FROM $table_name WHERE is_synced = 0 LIMIT {$limit}",
+                OBJECT
+            );
+
+            if ( $results === false ) {
+                throw new \Exception( __( 'Failed to fetch inventory items from the database.', 'zenoti' ) );
+            }
+
+            return $results;
+        } catch (\Exception $e) {
+            $this->put_program_logs( $e->getMessage() );
+            return [];
+        }
+    }
+
+    public function sync_inventory_to_woocommerce( $product_code, $quantity ) {
+        try {
+            // Get product by SKU
+            $product = wc_get_product( $product_code );
+
+            if ( !$product ) {
+                return [
+                    'success' => false,
+                    'message' => __( 'Product with SKU ', 'zenoti' ) . $product_code . __( ' not found in WooCommerce.', 'zenoti' ),
+                ];
+            }
+
+            // Update stock quantity
+            $product->set_stock_quantity( $quantity );
+            $product->save();
+
+            return [
+                'success' => true,
+                'message' => __( 'Product stock updated successfully for SKU: ', 'zenoti' ) . $product_code,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => __( 'Failed to update product stock for SKU: ', 'zenoti' ) . $product_code . '. ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    public function mark_inventory_as_synced( $product_code ) {
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_inventory';
+
+        try {
+            $update_result = $wpdb->update(
+                $table_name,
+                [ 'is_synced' => 1 ],
+                [ 'product_code' => $product_code ],
+                [ '%d' ],
+                [ '%s' ]
+            );
+
+            if ( $update_result === false ) {
+                throw new \Exception( __( 'Failed to mark inventory as synced for SKU: ', 'zenoti' ) . $product_code );
+            }
+        } catch (\Exception $e) {
+            $this->put_program_logs( $e->getMessage() );
+        }
+    }
+
 }

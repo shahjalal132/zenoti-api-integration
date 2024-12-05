@@ -1,6 +1,10 @@
-Inventory URL: https://api.zenoti.com/v1/inventory/stock?inventory_date=2024-12-05+05%3A21%3A33&center_id=d3b50eac-ab88-4eb1-97e4-78f192b25bd8 - 2024-12-05 05:21:33
-
-Total Inventory items: 360 - 2024-12-05 05:21:35
-
-Total Inventory items: 360 - 2024-12-05 05:22:00
+Inventory Items: 
+[
+    {
+        "product_code": "P287",
+        "store_quantity": "3.00",
+        "floor_quantity": "0.00",
+        "total_quantity": "3.00"
+    }
+] - 2024-12-05 05:55:17
 
