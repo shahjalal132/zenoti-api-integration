@@ -158,8 +158,13 @@ class Sync_Inventory {
             $not_found_products = [];
 
             foreach ( $inventory_items as $inventory_item ) {
+
                 $product_code = $inventory_item->product_code;
                 $quantity     = $inventory_item->total_quantity;
+
+                // get product id by product code as product sku. (backward compatibility)
+                // $product_id = $this->get_product_sku_by_product_code( $product_code );
+                // $this->put_program_logs( 'product_id: ' . $product_id );
 
                 // Sync inventory to WooCommerce
                 $sync_result = $this->sync_inventory_to_woocommerce( $product_code, $quantity );
