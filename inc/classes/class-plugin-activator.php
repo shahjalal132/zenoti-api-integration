@@ -80,11 +80,12 @@ class Plugin_Activator {
 
         $sql = "CREATE TABLE IF NOT EXISTS $table_name (
              id INT AUTO_INCREMENT,
-             center_code VARCHAR(255) UNIQUE NOT NULL,
+             center_code VARCHAR(255) NOT NULL,
              product_code VARCHAR(20) NOT NULL,
              store_quantity DECIMAL(10,2) NULL,
              floor_quantity DECIMAL(10,2) NULL,
-             total_quantity DECIMAL(10,2) NULL,
+             total_quantity DECIMAL(10,2) NOT NULL,
+             inventory_data TEXT NOT NULL,
              is_synced TINYINT(1) NOT NULL DEFAULT '0',
              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
