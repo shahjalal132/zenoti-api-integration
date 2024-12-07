@@ -2,13 +2,17 @@
 
 namespace BOILERPLATE\Inc;
 
+use BOILERPLATE\Inc\Traits\Create_Guest;
 use BOILERPLATE\Inc\Traits\Program_Logs;
+use BOILERPLATE\Inc\Traits\Search_Guest;
 use BOILERPLATE\Inc\Traits\Singleton;
 
 class Sync_Sales {
 
     use Singleton;
     use Program_Logs;
+    use Search_Guest;
+    use Create_Guest;
 
     protected $api_base_url;
     protected $api_key;
@@ -66,6 +70,7 @@ class Sync_Sales {
             foreach ( $this->center_ids as $center_id ) {
                 // search guest
                 $guest = $this->search_a_guest( $center_id, $customer_email );
+                // $this->put_program_logs( 'Guest Response: ' . $guest );
 
                 // decode json
                 $guest = json_decode( $guest, true );
@@ -113,7 +118,8 @@ class Sync_Sales {
             ];
 
             $new_guest_response = $this->create_a_guest( $payload );
-            $new_guest          = json_decode( $new_guest_response, true );
+            // $this->put_program_logs( 'New Guest Response: ' . $new_guest_response );
+            $new_guest = json_decode( $new_guest_response, true );
 
             if ( $new_guest && isset( $new_guest['id'] ) && isset( $new_guest['center_id'] ) ) {
 
@@ -170,7 +176,7 @@ class Sync_Sales {
         // $this->put_program_logs( 'Total: ' . $this->total );
 
         // Create invoice
-        $invoice_response = $this->create_a_invoice( $invoice_payload );
+        // $invoice_response = $this->create_a_invoice( $invoice_payload );
         // $this->put_program_logs( "Invoice response: " . $invoice_response );
 
         // get all product of a center
@@ -183,61 +189,6 @@ class Sync_Sales {
         // prepare message
         // $message = sprintf( "Total %s products found for center %s", count( $products ), $this->center_id );
         // $this->put_program_logs( $message );
-    }
-
-    /**
-     * Search a guest on zenoti.
-     * @param string $email
-     * @return string
-     */
-    public function search_a_guest( string $center_id, string $email ) {
-
-        $curl = curl_init();
-        curl_setopt_array( $curl, array(
-            CURLOPT_URL            => "{$this->api_base_url}/guests/search?center_id={$center_id}&email={$email}",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING       => '',
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => 'GET',
-            CURLOPT_HTTPHEADER     => array(
-                'Authorization: apikey ' . $this->api_key,
-                'accept: application/json',
-            ),
-        ) );
-
-        $response = curl_exec( $curl );
-
-        curl_close( $curl );
-        return $response;
-    }
-
-    public function create_a_guest( $payload ) {
-
-        $curl = curl_init();
-        curl_setopt_array( $curl, array(
-            CURLOPT_URL            => "{$this->api_base_url}/guests",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING       => '',
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => 'POST',
-            CURLOPT_POSTFIELDS     => json_encode( $payload ),
-            CURLOPT_HTTPHEADER     => array(
-                'Authorization: apikey ' . $this->api_key,
-                'accept: application/json',
-                'content-type: application/json',
-            ),
-        ) );
-
-        $response = curl_exec( $curl );
-
-        curl_close( $curl );
-        return $response;
     }
 
     public function get_country_code_based_on_country( string $country ) {

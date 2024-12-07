@@ -3,12 +3,14 @@
 namespace BOILERPLATE\Inc;
 
 use BOILERPLATE\Inc\Traits\Program_Logs;
+use BOILERPLATE\Inc\Traits\Search_Guest;
 use BOILERPLATE\Inc\Traits\Singleton;
 
 class Sync_Leads {
 
     use Singleton;
     use Program_Logs;
+    use Search_Guest;
 
     private $api_base_url;
     private $api_key;
@@ -24,6 +26,11 @@ class Sync_Leads {
 
         // Register REST API action
         add_action( 'rest_api_init', [ $this, 'register_rest_route' ] );
+
+        // get api credentials
+        $this->api_base_url = get_option( 'api_url', 'https://api.zenoti.com/v1' );
+        $this->api_key      = get_option( 'api_key' );
+        $this->center_id    = get_option( 'option2' );
     }
 
     public function register_rest_route() {
@@ -109,7 +116,10 @@ class Sync_Leads {
         global $wpdb;
         $table_name = $wpdb->prefix . 'sync_leads';
 
-        return "jalal";
+        $guest = $this->search_a_guest( $this->center_id, 'ffshahjalal@gmail.com' );
+        $this->put_program_logs( 'Guest Response: ' . $guest );
+
+        return $guest;
     }
 
 }
