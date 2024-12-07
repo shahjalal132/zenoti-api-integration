@@ -20,6 +20,10 @@ class Sync_Leads {
     }
 
     public function lead_generation() {
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_leads';
+
         // check if the nonce is set
         if ( !isset( $_POST['nonce'] ) || !wp_verify_nonce( $_POST['nonce'], 'sync_leads' ) ) {
             wp_send_json_error( 'An error occurred! Please try again.' );
@@ -43,6 +47,19 @@ class Sync_Leads {
             $country
         );
         // $this->put_program_logs( $message );
+
+        // insert the lead data into the database
+        $wpdb->insert(
+            $table_name,
+            [
+                'first_name' => $first_name,
+                'last_name'  => $last_name,
+                'email'      => $email,
+                'phone'      => $phone,
+                'city'       => $city,
+                'country'    => $country,
+            ]
+        );
 
         // Respond with success
         wp_send_json_success( 'Lead data logged successfully.' );
