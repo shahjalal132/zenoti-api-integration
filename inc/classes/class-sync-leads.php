@@ -10,6 +10,10 @@ class Sync_Leads {
     use Singleton;
     use Program_Logs;
 
+    private $api_base_url;
+    private $api_key;
+    private $center_id;
+
     public function __construct() {
         $this->setup_hooks();
     }
@@ -17,6 +21,19 @@ class Sync_Leads {
     public function setup_hooks() {
         add_action( 'wp_ajax_lead_generation', [ $this, 'lead_generation' ] );
         add_action( 'wp_ajax_nopriv_lead_generation', [ $this, 'lead_generation' ] );
+
+        // Register REST API action
+        add_action( 'rest_api_init', [ $this, 'register_rest_route' ] );
+    }
+
+    public function register_rest_route() {
+
+        register_rest_route( 'api/v1', '/sync-leads', [
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'sync_leads' ],
+            'permission_callback' => '__return_true',
+        ] );
+
     }
 
     public function lead_generation() {
@@ -85,6 +102,14 @@ class Sync_Leads {
             // Respond with error message
             wp_send_json_error( $e->getMessage() );
         }
+    }
+
+    public function sync_leads() {
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_leads';
+
+        return "jalal";
     }
 
 }
