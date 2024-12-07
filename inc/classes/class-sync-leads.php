@@ -116,10 +116,38 @@ class Sync_Leads {
         global $wpdb;
         $table_name = $wpdb->prefix . 'sync_leads';
 
-        $guest = $this->search_a_guest( $this->center_id, 'ffshahjalal@gmail.com' );
-        $this->put_program_logs( 'Guest Response: ' . $guest );
+        // prepare query
+        $sql = "SELECT * FROM $table_name WHERE is_synced = 0 LIMIT 1";
+        // get lead
+        $lead = $wpdb->get_row( $sql );
 
-        return $guest;
+        if ( empty( $lead ) ) {
+            return "Didn't find OR No leads to sync";
+        }
+
+        // extract email
+        $email = $lead->email;
+
+        // initialize guest id
+        $guest_id = "";
+
+        // search guest
+        $existing_guest = $this->search_a_guest( $this->center_id, $email );
+        // $this->put_program_logs( 'Guest Response: ' . $existing_guest );
+        // decode response
+        $existing_guest = json_decode( $existing_guest, true );
+        // check if existing_guest exists
+        if ( isset( $existing_guest['page_Info']['total'] ) && $existing_guest['page_Info']['total'] > 0 ) {
+            $guest_id = $existing_guest['guests'][0]['id'];
+        }
+
+        /**
+         * TODO: Create guest if not found.
+         * Generate payload
+         * Create opportunity
+         */
+
+        return $guest_id;
     }
 
 }

@@ -1,0 +1,57 @@
+Guest Response: 
+{
+    "guests": [
+        {
+            "id": "0DA80DC5-5781-4FA6-B0F6-25BCECF61CE2",
+            "offline_id": null,
+            "code": "RSC60",
+            "center_id": "d3b50eac-ab88-4eb1-97e4-78f192b25bd8",
+            "preferred_service_id": null,
+            "is_online_booking_blocked": false,
+            "center_name": "Reskin Clinic Sheffield",
+            "created_date": "2024-12-07T10:09:03",
+            "can_edit_personal_info": false,
+            "is_virtual_guest": false,
+            "is_guest_custom_form_filled": false,
+            "personal_info": {
+                "user_name": "shah_jalal",
+                "first_name": "Shah",
+                "last_name": "Jalal",
+                "middle_name": "",
+                "email": "ffshahjalal@gmail.com",
+                "mobile_phone": {
+                    "country_code": 224,
+                    "phone_code": 0,
+                    "number": "07944706437"
+                },
+                "work_phone": null,
+                "home_phone": null,
+                "gender": -1,
+                "gender_name": "NotSpecified",
+                "date_of_birth": null,
+                "is_minor": false,
+                "nationality_id": -1,
+                "language_id": 0,
+                "anniversary_date": null,
+                "lock_guest_custom_data": false,
+                "pan": "",
+                "dob_incomplete_year": null
+            },
+            "address_info": null,
+            "preferences": null,
+            "tags": null,
+            "referral": null,
+            "primary_employee": null,
+            "guest_passes": null,
+            "guest_milestone_details": null,
+            "additional_details": null,
+            "validate_additional_details": false
+        }
+    ],
+    "page_Info": {
+        "total": 1,
+        "page": 1,
+        "size": 10
+    }
+} - 2024-12-07 10:29:32
+
