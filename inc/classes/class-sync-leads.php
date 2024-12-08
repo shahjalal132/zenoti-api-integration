@@ -23,6 +23,7 @@ class Sync_Leads {
     }
 
     public function setup_hooks() {
+        
         add_action( 'wp_ajax_lead_generation', [ $this, 'lead_generation' ] );
         add_action( 'wp_ajax_nopriv_lead_generation', [ $this, 'lead_generation' ] );
 
@@ -152,6 +153,10 @@ class Sync_Leads {
                 // Get the country code based on the lead's country
                 $country_code = $this->get_country_code_based_on_country( $lead->country );
 
+                $number = $lead->phone;
+                // remove spaces
+                $number = str_replace( " ", "", $number );
+
                 // Prepare the payload for creating a new guest
                 $create_guest_payload = [
                     'center_id'     => $this->center_id,
@@ -161,13 +166,16 @@ class Sync_Leads {
                         'email'        => $lead->email,
                         'mobile_phone' => [
                             'country_code' => $country_code,
-                            'number'       => $lead->phone,
+                            'number'       => $number,
                         ],
                     ],
                     'address_info'  => [
                         'city' => $lead->city,
                     ],
                 ];
+
+                // Log the guest creation payload
+                $this->put_program_logs( 'Guest creation payload: ' . json_encode( $create_guest_payload ) );
 
                 // Call the API to create the guest
                 $new_guest_response = $this->create_a_guest( $create_guest_payload );
@@ -179,12 +187,12 @@ class Sync_Leads {
 
                 // Decode the response to get the new guest's ID
                 $new_guest = json_decode( $new_guest_response, true );
-                if ( isset( $new_guest['guests'][0]['id'] ) ) {
-                    $guest_id     = $new_guest['guests'][0]['id'];
+                if ( isset( $new_guest['id'] ) ) {
+                    $guest_id     = $new_guest['id'];
                     $guest_status = "New Guest"; // Mark the guest as new
                 } else {
                     // Throw an error if the guest ID is not returned
-                    throw new \Exception( "Failed to create a new guest." );
+                    throw new \Exception( "Failed to create a new guest. API response: $new_guest_response" );
                 }
             }
 
@@ -222,6 +230,8 @@ class Sync_Leads {
                     throw new \Exception( "Failed to create an opportunity." );
                 }
 
+            }else{
+                throw new \Exception( "Failed to create an opportunity. Guest ID is empty." );
             }
 
             // update the in_synced column
@@ -235,7 +245,7 @@ class Sync_Leads {
             );
 
             // Return a success message with the guest status and ID
-            return "Lead synced successfully. Guest ID: $guest_id. Status: $guest_status";
+            return "Lead synced successfully. Guest ID: $guest_id Opportunity ID: $opportunity_id. Status: $guest_status";
 
         } catch (\Exception $e) {
             // Log any errors that occur and return an error message
