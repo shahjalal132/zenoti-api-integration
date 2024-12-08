@@ -24,8 +24,13 @@ class Sync_Leads {
 
     public function setup_hooks() {
 
+        // Register AJAX handler for lead generation
         add_action( 'wp_ajax_lead_generation', [ $this, 'lead_generation' ] );
         add_action( 'wp_ajax_nopriv_lead_generation', [ $this, 'lead_generation' ] );
+
+        // Register AJAX handler for syncing leads
+        add_action( 'wp_ajax_sync_leads', [ $this, 'sync_leads' ] );
+        add_action( 'wp_ajax_nopriv_sync_leads', [ $this, 'sync_leads' ] );
 
         // Register REST API action
         add_action( 'rest_api_init', [ $this, 'register_rest_route' ] );
@@ -117,8 +122,30 @@ class Sync_Leads {
 
         try {
 
+            // Start sync lead via submit form
+
+            // Check if the nonce is set and valid
+            if ( !isset( $_POST['nonce'] ) || !wp_verify_nonce( $_POST['nonce'], 'sync_leads' ) ) {
+                throw new \Exception( 'Invalid nonce. Possible CSRF attack.' );
+            }
+
+            // Sanitize input fields
+            $first_name = sanitize_text_field( $_POST['first_name'] );
+            $last_name  = sanitize_text_field( $_POST['last_name'] );
+            $email      = sanitize_email( $_POST['email'] );
+            $phone      = sanitize_text_field( $_POST['phone'] );
+            $city       = sanitize_text_field( $_POST['city'] );
+            $country    = sanitize_text_field( $_POST['country'] );
+
+            // get the lead serial id
+            $sql       = "SELECT id FROM $table_name WHERE email = '$email'";
+            $lead      = $wpdb->get_row( $sql );
+            $serial_id = $lead->id;
+
+            // End sync lead via submit form
+
             // Query to fetch the first unsynced lead
-            $sql  = "SELECT * FROM $table_name WHERE is_synced = 0 LIMIT 1";
+            /* $sql  = "SELECT * FROM $table_name WHERE is_synced = 0 LIMIT 1";
             $lead = $wpdb->get_row( $sql );
 
             // If no unsynced leads are found, return a message
@@ -132,7 +159,10 @@ class Sync_Leads {
             $first_name     = $lead->first_name;
             $last_name      = $lead->last_name;
             $city           = $lead->city;
-            $country        = $lead->country;
+            $country        = $lead->country; 
+            $phone          = $lead->phone;
+            */
+
             $guest_id       = "";
             $guest_status   = "";
             $opportunity_id = "";
@@ -159,7 +189,7 @@ class Sync_Leads {
                 // Get the country code based on the lead's country
                 $country_code = $this->get_country_code_based_on_country( $country );
 
-                $number = $lead->phone;
+                $number = $phone;
                 // remove spaces
                 $number = str_replace( " ", "", $number );
 
@@ -181,7 +211,7 @@ class Sync_Leads {
                 ];
 
                 // Log the guest creation payload
-                $this->put_program_logs( 'Guest creation payload: ' . json_encode( $create_guest_payload ) );
+                // $this->put_program_logs( 'Guest creation payload: ' . json_encode( $create_guest_payload ) );
 
                 // Call the API to create the guest
                 $new_guest_response = $this->create_a_guest( $create_guest_payload );
