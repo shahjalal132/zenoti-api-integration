@@ -125,12 +125,14 @@ class Sync_Leads {
             }
 
             // Extract the lead's email
-            $email        = $lead->email;
-            $guest_id     = "";
-            $guest_status = ""; // To track if the guest is new or existing
+            $email          = $lead->email;
+            $guest_id       = "";
+            $guest_status   = "";
+            $opportunity_id = "";
 
             // Search for an existing guest by email in the center
             $existing_guest_response = $this->search_a_guest( $this->center_id, $email );
+            // $this->put_program_logs( "Existing guest response: " . $existing_guest_response );
             if ( $existing_guest_response === false ) {
                 // Throw an error if the search fails
                 throw new \Exception( "Error while searching for an existing guest." );
@@ -169,6 +171,7 @@ class Sync_Leads {
 
                 // Call the API to create the guest
                 $new_guest_response = $this->create_a_guest( $create_guest_payload );
+                // $this->put_program_logs( 'Guest creation response: ' . $new_guest_response );
                 if ( $new_guest_response === false ) {
                     // Throw an error if the guest creation fails
                     throw new \Exception( "Error while creating a new guest." );
@@ -204,14 +207,32 @@ class Sync_Leads {
 
                 // Call the API to create the opportunity
                 $opportunity_response = $this->create_an_opportunity( $opportunity_payload );
+                // $this->put_program_logs( 'Opportunity creation response: ' . $opportunity_response );
                 if ( $opportunity_response === false ) {
                     // Throw an error if the opportunity creation fails
                     throw new \Exception( "Error while creating an opportunity." );
                 }
 
-                // Log the success response
-                $this->put_program_logs( 'Opportunity created successfully: ' . $opportunity_response );
+                // Decode the response to get the opportunity ID
+                $opportunity = json_decode( $opportunity_response, true );
+                if ( isset( $opportunity['success'] ) && $opportunity['success'] === true ) {
+                    $opportunity_id = $opportunity['opportunity_id'];
+                } else {
+                    // Throw an error if the opportunity ID is not returned
+                    throw new \Exception( "Failed to create an opportunity." );
+                }
+
             }
+
+            // update the in_synced column
+            $wpdb->update(
+                $table_name,
+                [
+                    'opportunity_id' => $opportunity_id,
+                    'is_synced'      => 1,
+                ],
+                [ 'id' => $lead->id ]
+            );
 
             // Return a success message with the guest status and ID
             return "Lead synced successfully. Guest ID: $guest_id. Status: $guest_status";

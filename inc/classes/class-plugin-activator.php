@@ -111,6 +111,7 @@ class Plugin_Activator {
              phone VARCHAR(20) NOT NULL,
              city VARCHAR(50) NOT NULL,
              country VARCHAR(50) NOT NULL,
+             opportunity_id VARCHAR(255) NULL,
              is_synced TINYINT(1) NOT NULL DEFAULT '0',
              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
