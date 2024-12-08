@@ -23,7 +23,7 @@ class Sync_Leads {
     }
 
     public function setup_hooks() {
-        
+
         add_action( 'wp_ajax_lead_generation', [ $this, 'lead_generation' ] );
         add_action( 'wp_ajax_nopriv_lead_generation', [ $this, 'lead_generation' ] );
 
@@ -116,6 +116,7 @@ class Sync_Leads {
         $table_name = $wpdb->prefix . 'sync_leads';
 
         try {
+
             // Query to fetch the first unsynced lead
             $sql  = "SELECT * FROM $table_name WHERE is_synced = 0 LIMIT 1";
             $lead = $wpdb->get_row( $sql );
@@ -126,7 +127,12 @@ class Sync_Leads {
             }
 
             // Extract the lead's email
+            $serial_id      = $lead->id;
             $email          = $lead->email;
+            $first_name     = $lead->first_name;
+            $last_name      = $lead->last_name;
+            $city           = $lead->city;
+            $country        = $lead->country;
             $guest_id       = "";
             $guest_status   = "";
             $opportunity_id = "";
@@ -151,7 +157,7 @@ class Sync_Leads {
             // If no guest ID is found, create a new guest
             if ( empty( $guest_id ) ) {
                 // Get the country code based on the lead's country
-                $country_code = $this->get_country_code_based_on_country( $lead->country );
+                $country_code = $this->get_country_code_based_on_country( $country );
 
                 $number = $lead->phone;
                 // remove spaces
@@ -161,16 +167,16 @@ class Sync_Leads {
                 $create_guest_payload = [
                     'center_id'     => $this->center_id,
                     'personal_info' => [
-                        'first_name'   => $lead->first_name,
-                        'last_name'    => $lead->last_name,
-                        'email'        => $lead->email,
+                        'first_name'   => $first_name,
+                        'last_name'    => $last_name,
+                        'email'        => $email,
                         'mobile_phone' => [
                             'country_code' => $country_code,
                             'number'       => $number,
                         ],
                     ],
                     'address_info'  => [
-                        'city' => $lead->city,
+                        'city' => $city,
                     ],
                 ];
 
@@ -199,7 +205,7 @@ class Sync_Leads {
             // If a valid guest ID exists, create an opportunity
             if ( !empty( $guest_id ) ) {
                 // Prepare the opportunity title using the lead's name
-                $opportunity_title = 'Opportunity for ' . $lead->first_name . ' ' . $lead->last_name;
+                $opportunity_title = 'Opportunity for ' . $first_name . ' ' . $last_name;
 
                 // Set the follow-up date to today's date
                 $follow_up_date = date( 'Y-m-d' );
@@ -230,7 +236,7 @@ class Sync_Leads {
                     throw new \Exception( "Failed to create an opportunity." );
                 }
 
-            }else{
+            } else {
                 throw new \Exception( "Failed to create an opportunity. Guest ID is empty." );
             }
 
@@ -241,7 +247,7 @@ class Sync_Leads {
                     'opportunity_id' => $opportunity_id,
                     'is_synced'      => 1,
                 ],
-                [ 'id' => $lead->id ]
+                [ 'id' => $serial_id ]
             );
 
             // Return a success message with the guest status and ID
