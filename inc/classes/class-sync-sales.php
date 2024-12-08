@@ -2,6 +2,7 @@
 
 namespace BOILERPLATE\Inc;
 
+use BOILERPLATE\Inc\Traits\Api_Credentials;
 use BOILERPLATE\Inc\Traits\Create_Guest;
 use BOILERPLATE\Inc\Traits\Program_Logs;
 use BOILERPLATE\Inc\Traits\Search_Guest;
@@ -13,17 +14,16 @@ class Sync_Sales {
     use Program_Logs;
     use Search_Guest;
     use Create_Guest;
+    use Api_Credentials;
 
-    protected $api_base_url;
-    protected $api_key;
     protected $center_ids;
-    protected $center_id;
     protected $guest_id;
     private $total;
-    private $employee_id;
 
     public function __construct() {
         $this->setup_hooks();
+        // Initialize credentials
+        $this->load_api_credentials();
     }
 
     public function setup_hooks() {
@@ -32,11 +32,7 @@ class Sync_Sales {
 
         // get center ids
         $this->center_ids = $this->get_center_ids_from_db();
-
-        // get api credentials
-        $this->api_base_url = get_option( 'api_url', 'https://api.zenoti.com/v1' );
-        $this->api_key      = get_option( 'api_key' );
-        $this->employee_id  = get_option( 'option1' );
+        
     }
 
     /**
