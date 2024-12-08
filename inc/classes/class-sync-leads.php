@@ -5,13 +5,15 @@ namespace BOILERPLATE\Inc;
 use BOILERPLATE\Inc\Traits\Api_Credentials;
 use BOILERPLATE\Inc\Traits\Program_Logs;
 use BOILERPLATE\Inc\Traits\Search_Guest;
+use BOILERPLATE\Inc\Traits\Create_Guest;
 use BOILERPLATE\Inc\Traits\Singleton;
 
 class Sync_Leads {
 
     use Singleton;
-    use Program_Logs;
     use Search_Guest;
+    use Create_Guest;
+    use Program_Logs;
     use Api_Credentials;
 
     public function __construct() {
@@ -112,38 +114,176 @@ class Sync_Leads {
         global $wpdb;
         $table_name = $wpdb->prefix . 'sync_leads';
 
-        // prepare query
-        $sql = "SELECT * FROM $table_name WHERE is_synced = 0 LIMIT 1";
-        // get lead
-        $lead = $wpdb->get_row( $sql );
+        try {
+            // Query to fetch the first unsynced lead
+            $sql  = "SELECT * FROM $table_name WHERE is_synced = 0 LIMIT 1";
+            $lead = $wpdb->get_row( $sql );
 
-        if ( empty( $lead ) ) {
-            return "Didn't find OR No leads to sync";
+            // If no unsynced leads are found, return a message
+            if ( empty( $lead ) ) {
+                return "No leads available to sync.";
+            }
+
+            // Extract the lead's email
+            $email        = $lead->email;
+            $guest_id     = "";
+            $guest_status = ""; // To track if the guest is new or existing
+
+            // Search for an existing guest by email in the center
+            $existing_guest_response = $this->search_a_guest( $this->center_id, $email );
+            if ( $existing_guest_response === false ) {
+                // Throw an error if the search fails
+                throw new \Exception( "Error while searching for an existing guest." );
+            }
+
+            // Decode the response to get guest details
+            $existing_guest = json_decode( $existing_guest_response, true );
+
+            // If a guest is found, retrieve the guest ID and mark the guest as existing
+            if ( isset( $existing_guest['page_Info']['total'] ) && $existing_guest['page_Info']['total'] > 0 ) {
+                $guest_id     = $existing_guest['guests'][0]['id'];
+                $guest_status = "Existing Guest";
+            }
+
+            // If no guest ID is found, create a new guest
+            if ( empty( $guest_id ) ) {
+                // Get the country code based on the lead's country
+                $country_code = $this->get_country_code_based_on_country( $lead->country );
+
+                // Prepare the payload for creating a new guest
+                $create_guest_payload = [
+                    'center_id'     => $this->center_id,
+                    'personal_info' => [
+                        'first_name'   => $lead->first_name,
+                        'last_name'    => $lead->last_name,
+                        'email'        => $lead->email,
+                        'mobile_phone' => [
+                            'country_code' => $country_code,
+                            'number'       => $lead->phone,
+                        ],
+                    ],
+                    'address_info'  => [
+                        'city' => $lead->city,
+                    ],
+                ];
+
+                // Call the API to create the guest
+                $new_guest_response = $this->create_a_guest( $create_guest_payload );
+                if ( $new_guest_response === false ) {
+                    // Throw an error if the guest creation fails
+                    throw new \Exception( "Error while creating a new guest." );
+                }
+
+                // Decode the response to get the new guest's ID
+                $new_guest = json_decode( $new_guest_response, true );
+                if ( isset( $new_guest['guests'][0]['id'] ) ) {
+                    $guest_id     = $new_guest['guests'][0]['id'];
+                    $guest_status = "New Guest"; // Mark the guest as new
+                } else {
+                    // Throw an error if the guest ID is not returned
+                    throw new \Exception( "Failed to create a new guest." );
+                }
+            }
+
+            // If a valid guest ID exists, create an opportunity
+            if ( !empty( $guest_id ) ) {
+                // Prepare the opportunity title using the lead's name
+                $opportunity_title = 'Opportunity for ' . $lead->first_name . ' ' . $lead->last_name;
+
+                // Set the follow-up date to today's date
+                $follow_up_date = date( 'Y-m-d' );
+
+                // Prepare the payload for creating an opportunity
+                $opportunity_payload = [
+                    'center_id'         => $this->center_id,
+                    'opportunity_title' => $opportunity_title,
+                    'guest_id'          => $guest_id,
+                    'created_by_id'     => $this->employee_id,
+                    'followup_date'     => $follow_up_date,
+                ];
+
+                // Call the API to create the opportunity
+                $opportunity_response = $this->create_an_opportunity( $opportunity_payload );
+                if ( $opportunity_response === false ) {
+                    // Throw an error if the opportunity creation fails
+                    throw new \Exception( "Error while creating an opportunity." );
+                }
+
+                // Log the success response
+                $this->put_program_logs( 'Opportunity created successfully: ' . $opportunity_response );
+            }
+
+            // Return a success message with the guest status and ID
+            return "Lead synced successfully. Guest ID: $guest_id. Status: $guest_status";
+
+        } catch (\Exception $e) {
+            // Log any errors that occur and return an error message
+            $this->put_program_logs( 'Error: ' . $e->getMessage() );
+            return "An error occurred: " . $e->getMessage();
         }
+    }
 
-        // extract email
-        $email = $lead->email;
+    public function get_country_code_based_on_country( string $country ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'sync_countries';
+        $country_id = $wpdb->get_var( "SELECT country_id FROM $table_name WHERE country_name LIKE '%{$country}%'" );
+        return $country_id;
+    }
 
-        // initialize guest id
-        $guest_id = "";
+    public function get_all_employees_of_a_center() {
 
-        // search guest
-        $existing_guest = $this->search_a_guest( $this->center_id, $email );
-        // $this->put_program_logs( 'Guest Response: ' . $existing_guest );
+        $curl = curl_init();
+        curl_setopt_array( $curl, array(
+            CURLOPT_URL            => "{$this->api_base_url}/centers/{$this->center_id}/employees?page=1&size=100",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'GET',
+            CURLOPT_HTTPHEADER     => array(
+                'Authorization: apikey ' . $this->api_key,
+                'accept: application/json',
+            ),
+        ) );
+
+        $response = curl_exec( $curl );
+
+        curl_close( $curl );
+
         // decode response
-        $existing_guest = json_decode( $existing_guest, true );
-        // check if existing_guest exists
-        if ( isset( $existing_guest['page_Info']['total'] ) && $existing_guest['page_Info']['total'] > 0 ) {
-            $guest_id = $existing_guest['guests'][0]['id'];
+        $response = json_decode( $response, true );
+        if ( isset( $response['employees'] ) ) {
+            $employees = $response['employees'];
         }
+        return $employees;
+    }
 
-        /**
-         * TODO: Create guest if not found.
-         * Generate payload
-         * Create opportunity
-         */
+    public function create_an_opportunity( array $payload ) {
 
-        return $guest_id;
+        $curl = curl_init();
+        curl_setopt_array( $curl, array(
+            CURLOPT_URL            => "{$this->api_base_url}/opportunities",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode( $payload ),
+            CURLOPT_HTTPHEADER     => array(
+                'Authorization: apikey ' . $this->api_key,
+                'accept: application/json',
+                'Content-Type: application/json',
+            ),
+        ) );
+
+        $response = curl_exec( $curl );
+
+        curl_close( $curl );
+        return $response;
     }
 
 }
