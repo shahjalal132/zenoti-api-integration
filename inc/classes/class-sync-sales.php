@@ -21,9 +21,8 @@ class Sync_Sales {
     private $total;
 
     public function __construct() {
-        $this->setup_hooks();
-        // Initialize credentials
         $this->load_api_credentials();
+        $this->setup_hooks();
     }
 
     public function setup_hooks() {
