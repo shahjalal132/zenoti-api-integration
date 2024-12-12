@@ -13,6 +13,7 @@ class Sync_Inventory {
     use Api_Credentials;
 
     public function __construct() {
+        $this->load_api_credentials();
         $this->setup_hooks();
     }
 
