@@ -171,8 +171,12 @@ class Sync_Sales {
         // $this->put_program_logs( 'Total: ' . $this->total );
 
         // Create invoice
-        // $invoice_response = $this->create_a_invoice( $invoice_payload );
+        $invoice_response = $this->create_a_invoice( $invoice_payload );
         // $this->put_program_logs( "Invoice response: " . $invoice_response );
+
+        /**
+         * TODO: integrate Insert custom payment for an invoice into Zenoti and Close an invoice endpoint
+         */
 
         // get all product of a center
         // $products_json = $this->get_all_products( $this->center_id );
