@@ -156,17 +156,17 @@ class Sync_Inventory {
                 $quantity     = $inventory_item->total_quantity;
 
                 // get product id by product code as product sku. (backward compatibility)
-               // $product_id = $this->get_product_sku_by_product_code( $product_code );
+                // $product_id = $this->get_product_sku_by_product_code( $product_code );
                 // $this->put_program_logs( 'product_id: ' . $product_id );
 
                 // Sync inventory to WooCommerce
                 $sync_result = $this->sync_inventory_to_woocommerce( $product_code, $quantity );
 
                 if ( $sync_result['success'] ) {
-                    $updated_products[] = $product_code;
                     $this->mark_inventory_as_synced( $product_code ); // Mark as synced
+                    $updated_products[] = $product_code;
                 } else {
-$this->mark_inventory_as_synced( $product_code ); // Mark as synced
+                    $this->mark_inventory_as_synced( $product_code ); // Mark as synced
                     $not_found_products[] = $product_code;
                     // $not_found_products[] = $product_id;
                 }

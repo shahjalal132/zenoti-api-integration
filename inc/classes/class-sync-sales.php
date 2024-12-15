@@ -31,7 +31,7 @@ class Sync_Sales {
 
         // get center ids
         $this->center_ids = $this->get_center_ids_from_db();
-        
+
     }
 
     /**
@@ -150,7 +150,7 @@ class Sync_Sales {
                 $quantity    = $item->get_quantity();
 
                 // get product id by product code as product sku. (backward compatibility)
-                // $product_id = $this->get_product_sku_by_product_code( $product_sku );
+                $product_id = $this->get_product_sku_by_product_code( $product_sku );
                 // $this->put_program_logs( 'product_id: ' . $product_id );
 
                 // get total
@@ -158,7 +158,7 @@ class Sync_Sales {
 
                 // Populate invoice payload products
                 $invoice_payload['products'][] = [
-                    "id"         => $product_sku,
+                    "id"         => $product_id,
                     "quantity"   => $quantity,
                     "sale_by_id" => $this->employee_id,
                 ];
